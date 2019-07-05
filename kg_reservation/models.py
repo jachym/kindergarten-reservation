@@ -15,7 +15,7 @@ class Kindergarten(models.Model):
         help_text=_("Precise address")
     )
 
-   phone = models.CharField(
+    phone = models.CharField(
        max_length=20,
     )
 
@@ -54,7 +54,6 @@ class Day(models.Model):
     capacity = models.IntegerField()
     date = models.DateField()
     note = models.TextField(blank=True)
-    
-    child = models.ManyToManyField("Child")
-    teacher = models.ManyToManyField("Teacher")
 
+    children = models.ManyToManyField("Child")
+    teachers = models.ManyToManyField("Teacher")
