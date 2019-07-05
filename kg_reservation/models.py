@@ -27,11 +27,13 @@ class Kindergarten(models.Model):
 
 class Teacher(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    kindergarten = models.ForeignKey("Kindergarten")
+    kindergarten = models.ForeignKey("Kindergarten",
+                                    on_delete=models.CASCADE)
 
 class Parent(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    kindergarten = models.ForeignKey("Kindergarten")
+    kindergarten = models.ForeignKey("Kindergarten",
+                                    on_delete=models.CASCADE)
 
 class Child(models.Model):
 
@@ -46,8 +48,10 @@ class Child(models.Model):
         blank=True
     )
 
-    kindegarten = models.ForeignKey("Kinderkarten")
-    parent = models.ForeignKey("Parent")
+    kindegarten = models.ForeignKey("Kindergarten",
+                                    on_delete=models.CASCADE)
+    parent = models.ForeignKey("Parent",
+                                    on_delete=models.PROTECT)
 
 class Day(models.Model):
 
