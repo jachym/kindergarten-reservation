@@ -6,10 +6,19 @@ from django.utils.translation import gettext as _
 
 class Kindergarten(models.Model):
 
+    uri_name = models.CharField(
+        max_length=24,
+        help_text=_("URL identifier")
+    )
+
     name = models.CharField(
         max_length=50,
         help_text=_("The name of the Kindergarten")
     )
+
+    #ico = models.IntegerField(
+    #    blank=True
+    #)
 
     address = models.TextField(
         help_text=_("Precise address")
@@ -25,15 +34,27 @@ class Kindergarten(models.Model):
 
     note = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.name
+
+
+
 class Teacher(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     kindergarten = models.ForeignKey("Kindergarten",
                                     on_delete=models.CASCADE)
 
+    days = models.ManyToManyField("Day")
+
+    def __str__(self):
+        return "{} {}".format(self.user.first_name, self.user.last_name)
+
 class Parent(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     kindergarten = models.ForeignKey("Kindergarten",
                                     on_delete=models.CASCADE)
+    def __str__(self):
+        return "{} {}".format(self.user.first_name, self.user.last_name)
 
 class Child(models.Model):
 
@@ -53,11 +74,17 @@ class Child(models.Model):
     parent = models.ForeignKey("Parent",
                                     on_delete=models.PROTECT)
 
+    days = models.ManyToManyField("Day")
+
+    def __str__(self):
+        return "{} {}".format(self.first_name, self.last_name)
+
 class Day(models.Model):
 
     capacity = models.IntegerField()
     date = models.DateField()
     note = models.TextField(blank=True)
 
-    children = models.ManyToManyField("Child")
-    teachers = models.ManyToManyField("Teacher")
+
+    def __str__(self):
+        return str(self.date)
