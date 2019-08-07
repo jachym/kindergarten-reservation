@@ -3,16 +3,40 @@ from django.contrib import admin
 from .models import Kindergarten, Teacher, Parent, Day, Child
 
 class KindergartenAdmin(admin.ModelAdmin):
-    pass
+    list_display = (
+        "name", "phone", "email", "web")
 
 class TeacherAdmin(admin.ModelAdmin):
-    pass
+    list_display = (
+        "name", "kindergarten", "email", "phone")
+
+    list_filer = ("kindergarten")
+
+    def name(self, teacher):
+        return teacher.name
+
+    def email(self, teacher):
+        return teacher.user.email
+
+    def child(self, teacher):
+        return "ahoj"
 
 class ParentAdmin(admin.ModelAdmin):
-    pass
+    list_display = (
+        "name", "kindergarten", "email", "phone", "child")
+    list_filer = ("kindergarten")
+
+    def name(self, parent):
+        return self.name
+
+    def email(self, parent):
+        return parent.user.email
+
+    def child(self, parent):
+        return "ahoj"
 
 class ChildAdmin(admin.ModelAdmin):
-    pass
+    list_filer = ("kindergarten")
 
 class ChildInline(admin.TabularInline):
     model = Child.days.through
@@ -27,6 +51,8 @@ class DayAdmin(admin.ModelAdmin):
             ChildInline, TeachersInline
     ]
     exclude = ("days", "teachers")
+    list_display = ("date", "capacity", "kindergarten")
+    list_filter = ("kindergarten",)
 
 admin.site.register(Kindergarten, KindergartenAdmin)
 admin.site.register(Teacher, TeacherAdmin)
