@@ -1,0 +1,44 @@
+{% extends './base.html' %}
+
+{% block content %}
+
+<table class="table">
+        <tr>
+                <th>Jméno</th>
+                <td>
+                        {{ teacher.user.first_name }}
+                        {{ teacher.user.last_name }}
+                        ({{ teacher.user.username }})
+                </td>
+        </tr>
+        <tr>
+                <th>Telefon</th>
+                <td>{{ teacher.phone }}</td>
+        </tr>
+        <tr>
+                <th>e-mail</th>
+                <td>{{ teacher.user.email }}</td>
+        </tr>
+        <tr>
+                <th>admin</th>
+                <td>{{ teacher.is_admin }}</td>
+        </tr>
+</table>
+
+<h2>Plánované služby</h2>
+
+<table class="table table-striped">
+{% for day in teacher.days_planned %}
+        <tr><td>day.date</td></tr>
+{% endfor %}
+</table>
+
+<h2>Docházka</h2>
+
+<table class="table table-striped">
+{% for day in teacher.days_present %}
+        <tr><td>day.date</td></tr>
+{% endfor %}
+</table>
+
+{% endblock %}

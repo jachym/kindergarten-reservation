@@ -1,0 +1,77 @@
+{% extends './base.html' %}
+
+{% block content %}
+<h2>Program na den {{ day.date }}</h2>
+<table class="table">
+    <tr>
+        <td>Program</td><td>{{ day.program }}</td>
+    </tr>
+    <tr>
+        <td>Poznámka ke dni</td><td>{{ day.note }}</td>
+    </tr>
+</table>
+
+{% if parent %}
+<h3>Rodičovský pohled</h3>
+<form method="post" action="{% url 'day-save' day.kindergarten.uri_name day.date %} ">
+<table class="table">
+    <tr><th>Děcko</th><th>Rezervováno</th><th>Přítomno</th></tr>
+    {% for child in parent.childern_all %}
+    <tr>
+        <td>{{ child.first_name }} {{ child.middle_name }} {{ child.last_name }}</td>
+        <td>
+            <input type="checkbox" name="planned" {% if child.pk in parent.childern_planned %} checked="checked"{% endif %} />
+        </td>
+        <td>{% if child.pk in parent.childern_present %} ANO {% else %} NE {% endif %}</td>
+    </tr>
+    {% endfor %}
+</table>
+<input type="submit" value="Uložit"></input>
+</form>
+{% endif %}
+
+{% if teacher %}
+<h3>Učitelský pohled pohled</h3>
+<form method="post" action="{% url 'day-save' day.kindergarten.uri_name day.date %} ">
+<h4>Služba</h4>
+<table class="table">
+    <tr><th>Plánovaná</th><th>Přítomnost</th></tr>
+    <tr>
+        <td><input type="checkbox" name="planned" {% if teacher.planned %}checked="checked"{% endif %}></input></td>
+        <td>
+            {% if teacher.teacher.is_admin %}
+                <input type="checkbox" name="reserved" {% if teacher.present %}checked="checked"{% endif %}></input>
+            {% else %}
+                {% if teacher.present %}ANO{% else %}NE{% endif %}
+            {% endif %}
+        </td>
+    </tr>
+</table>
+
+<table class="table">
+    <tr><th>Děcko</th><th>Rezervováno</th><th>Přítomno</th></tr>
+    {% for child in teacher.childern_all %}
+    <tr>
+        <td>{{ child.first_name }} {{ child.middle_name }} {{ child.last_name }}</td>
+        <td>
+            {% if teacher.teacher.is_admin %}
+                <input type="checkbox" name="reserved" {% if child.pk in parent.childern_planned %}checked="checked"{% endif %}></input>
+            {% else %}
+                {% if child.pk in parent.childern_planned %} ANO {% else %} NE {% endif %}
+            {% endif %}
+        </td>
+        <td>
+            {% if teacher.teacher.is_admin %}
+                <input type="checkbox" name="reserved" {% if child.pk in parent.childern_present %}checked="checked"{% endif %}></input>
+            {% else %}
+                {% if child.pk in parent.childern_present %} ANO {% else %} NE {% endif %}
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<input type="submit" value="Uložit"></input>
+</form>
+{% endif %}
+
+{% endblock %}

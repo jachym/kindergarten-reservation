@@ -1,0 +1,11 @@
+{% extends './base.html' %}
+
+{% block content %}
+<table class="table">
+    <tr><td>Jméno</td><td>{{ kindergarten.name }}</td></tr>
+    <tr><td>Adresa</td><td>{{ kindergarten.address }}</td></tr>
+    <tr><td>Telefon</td><td>{{ kindergarten.phone }}</td></tr>
+    <tr><td>e-mail</td><td>{{ kindergarten.email }}</td></tr>
+    <tr><td>Web</td><td>{{ kindergarten.web }}</td></tr>
+</table>
+{% endblock %}
