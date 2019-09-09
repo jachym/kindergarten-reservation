@@ -1,12 +1,21 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group, Permission
 from django.utils.translation import gettext as _
+from datetime import datetime, timedelta, date as mydate
+import calendar
+from django.db.models import Subquery
+
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+import uuid
+
 
 # Create your models here.
 
 class Kindergarten(models.Model):
 
-    uri_name = models.CharField(
+    uri_name = models.SlugField(
+        unique=True,
         max_length=24,
         help_text=_("URL identifier")
     )
@@ -34,9 +43,28 @@ class Kindergarten(models.Model):
 
     default_capacity = models.IntegerField(blank=True, null=True)
 
+    compensation_length = models.IntegerField(
+        default=3,
+        help_text=_("Number of months where parent can compensate missing days")
+    )
+
     note = models.TextField(blank=True)
 
+    def save(self, *args, **kwargs):
 
+        label = Kindergarten._meta.app_label
+        content_type = ContentType.objects.get_for_model(Kindergarten)
+        codename = '{}_edit_{}'.format(label, self.uri_name)
+        name = 'Can edit Kindergarten {}'.format(self.name)
+        group_name = '{}_{}'.format(label, self.uri_name)
+
+        new_perm, created = Permission.objects.get_or_create(
+            codename=codename, name=name, content_type=content_type)
+
+        new_group, created = Group.objects.get_or_create(name=group_name)
+
+        new_group.permissions.add(new_perm)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -49,14 +77,26 @@ class Teacher(models.Model):
                                     on_delete=models.CASCADE)
     phone = models.CharField( max_length=20,)
 
-    days = models.ManyToManyField("Day")
+    days = models.ManyToManyField("Day", blank=True, related_name="teacher_day_planned")
+    present = models.ManyToManyField("Day", blank=True, related_name="teacher_day_present")
+    is_admin = models.BooleanField(blank=True, default=False)
 
     @property
     def name(self):
         if self.user.first_name:
             return "{} {}".format(self.user.first_name, self.user.last_name)
         else:
-            return self.user.name
+            return self.user.username
+
+    def save(self, *args, **kwargs):
+
+        label = Teacher._meta.app_label
+        group_name = '{}_{}'.format(label, self.kindergarten.uri_name)
+
+        group = Group.objects.get(name=group_name)
+        group.user_set.add(self.user)
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return "{} {}".format(self.user.first_name, self.user.last_name)
@@ -68,7 +108,10 @@ class Parent(models.Model):
     phone = models.CharField( max_length=20,)
 
     def __str__(self):
-        return "{} {}".format(self.user.first_name, self.user.last_name)
+        if self.user.first_name:
+            return "{} {}".format(self.user.first_name, self.user.last_name)
+        else:
+            return self.user.username
 
 class Child(models.Model):
 
@@ -83,29 +126,77 @@ class Child(models.Model):
         blank=True
     )
 
-    kindegarten = models.ForeignKey("Kindergarten",
-                                    on_delete=models.CASCADE)
-    parent = models.ForeignKey("Parent",
-                                    on_delete=models.PROTECT)
+    uuid = models.UUIDField(default=uuid.uuid4)
 
-    days = models.ManyToManyField("Day")
+    parent = models.ForeignKey("Parent", on_delete=models.PROTECT)
+
+    diet = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+
+    days = models.ManyToManyField("Day", blank=True, related_name="child_day_planned")
+    present = models.ManyToManyField("Day", blank=True, related_name="child_day_present")
+
+    def kindergarten(self):
+        return self.parent.kindergarten
+
+    @property
+    def absent(self):
+
+        absent = self.days.all().exclude(date__in=[d.date for d in self.present.all()])
+        return absent
+
+    def compensation(self, today=None):
+        days = []
+        months = self.kindergarten.compensation_length
+        if today is None:
+            today = datetime.today()
+
+        month = today.month - months
+        year = today.year
+        if month < 1:
+            month = 12 + today.month - months
+            year = today.year - 1
+
+        day = today.day
+        if calendar.monthrange(year, month)[1] < today.day:
+            day = calendar.monthrange(year, month)[1]
+
+        last_date = mydate(year=year, month=month, day=day)
+
+        days_compensate = self.absent.filter(date__gte=last_date)
+        return days_compensate
+
+
+
+    @property
+    def name(self):
+        return str(self)
 
     def __str__(self):
         return "{} {}".format(self.first_name, self.last_name)
 
+
 class Day(models.Model):
 
-    capacity = models.IntegerField(blank=True, null=True)
     date = models.DateField()
+    capacity = models.IntegerField(blank=True, null=True)
     note = models.TextField(blank=True)
+    program = models.TextField(blank=True)
     kindergarten = models.ForeignKey(
         "Kindergarten", on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
+
         if not self.capacity:
             self.capacity = self.kindergarten.default_capacity
+
+        if len(Day.objects.all().filter(date=self.date,
+                                  kindergarten=self.kindergarten)) >  0:
+            raise Exception("Date already exists")
+
 
         super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.date)
+

@@ -13,7 +13,7 @@
 
 {% if parent %}
 <h3>Rodičovský pohled</h3>
-<form method="post" action="{% url 'day-save' day.kindergarten.uri_name day.date %} ">
+<form method="post" action="{% url 'day-save' day.date.year day.date.month day.date.day  %} ">
 <table class="table">
     <tr><th>Děcko</th><th>Rezervováno</th><th>Přítomno</th></tr>
     {% for child in parent.childern_all %}

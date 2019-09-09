@@ -4,12 +4,13 @@ from django.urls import path, include
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
-    #url(r'^/$', views.kindergarten, name='kindergarten'),
-    url(r'^calendar/$', views.CalendarView.as_view(), name='calendar'),
-    #url(r'^/{}/child/{}$', views.index, name='child'),
-    #url(r'^/{}/parent/{}$', views.index, name='child'),
-    #url(r'^/{}/cal$', views.index, name='calendar'),
-    #url(r'^/{}/teacher/day/{}$', views.index, name='day'),
-    path('accounts/', include('django.contrib.auth.urls')),
-    path('accounts/profile/', views.profile, name='profile')
+    path('parent/', views.ParentView.as_view(), name="parent"),
+    path('parent/<int:pk>', views.ParentView.as_view(), name="parent"),
+    path('teacher/<int:pk>', views.TeacherView.as_view(), name="teacher"),
+    #path('kindergarten/<slug:uri_name>/', views.kgview),
+    path('<slug:kg>/', views.KindergartenView.as_view(), name="kindergarden"),
+    path('<int:year>/<int:month>/', views.CalendarView.as_view(), name="month"),
+    path('<int:year>/<int:month>/<int:day>/', views.DayView.as_view(), name="day"),
+    path('<int:year>/<int:month>/<int:day>/save', views.save_day, name="day-save"),
+    path('child/<uuid:uuid>/', views.ChildView.as_view(), name="child"),
 ]

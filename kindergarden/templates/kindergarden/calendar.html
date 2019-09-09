@@ -1,12 +1,25 @@
 <!-- kg_reservation/templates/kg_reservation/calendar.html -->
 
-{% extends 'kg_reservation/base.html' %}
+{% extends './base.html' %}
 
 {% block content %}
 <div class="clearfix">
-	<a class="btn btn-info left" href="{'% url 'cal:calendar' %}?{'{ prev_month }}"> Previous Month </a>
-	<a class="btn btn-info right" href="{'% url 'cal:calendar' %}?{'{ next_month }}"> Next Month </a>
+	<a class="btn btn-info left" href="{% url 'month' previous_year previous_month %}">Předchozí měsíc</a>
+	<a class="btn btn-info middle" href="{% url 'month' this_year this_month %}">Tento měsíc</a>
+	<a class="btn btn-info right" href="{% url 'month' next_year next_month %}">Další měsíc</a>
 </div>
+
+<table class="table">
+<tr>
+    <th>Jméno dítka</th><th>absence za poslední {{ child.kindergarden.compensation_length }} měsíce</th></tr>
+</tr>
+{% for child in parent.child_set.all %}
+<tr>
+    <th><a href="/child/{{ child.uuid }}">{{ child.name }}</a></th><th>{{ child.compensation | length }}</th>
+</tr>
+{% endfor %}
+</table>
+<h3>Kalendář</h3>
 
 {{ calendar }}
 {% endblock %}
