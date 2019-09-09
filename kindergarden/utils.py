@@ -22,6 +22,7 @@ class Calendar(HTMLCalendar):
             day = this_day[0]
             if teacher:
                 d += f'<div class="capacity"><b>Kapacita:</b> {day.capacity}</div>'
+                d += f'<div class="capacity"><b>Počet přihlášených:</b> {childern_reserved} </div>'
 
             d += '<ul>'
             if day in teacher_service:

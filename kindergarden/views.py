@@ -1,12 +1,12 @@
 from django.shortcuts import render
 
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 
 from datetime import datetime
 import calendar
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
 from django.views import generic
 from django.utils.safestring import mark_safe
 from django.contrib.auth import authenticate, login
@@ -167,6 +167,18 @@ def index(request):
 
 # ==================================================================
 @login_required
+def get_parent(request):
+    user = request.user
+    
+    return get_object_or_404(Parent, user=request.user)
+
+@login_required
+def get_teacher(request):
+    user = request.user
+    
+    return get_object_or_404(Teacher, user=request.user)
+
+@login_required
 def profile(request):
     user = request.user
     
@@ -186,11 +198,59 @@ def _parent_profile(teacher, request):
         return HttpResponse('hello parent')
 
 
-
 @method_decorator(login_required, name='dispatch')
 class CalendarView(generic.ListView):
     model = Day
     template_name = 'kindergarden/calendar.html'
+
+    def post(self, request, *args, **kwargs):
+        self.teacher = get_teacher(self.request)
+        if self.teacher.is_admin:
+            self.plan_month()
+            url = reverse("month", args=[self.kwargs["year"], self.kwargs["month"]])
+            return HttpResponseRedirect(url)
+        else:
+            self.get()
+
+    def plan_month(self):
+
+        kindergarten = self.teacher.kindergarten
+
+        childern = []
+        for par in Parent.objects.filter(kindergarten=kindergarten):
+            for child in par.child_set.all():
+                childern.append(child)
+
+        days = calendar.monthcalendar(self.kwargs["year"], self.kwargs["month"])
+        for week in days:
+            for dayidx in list(range(len(week)-1)):
+                if week[dayidx] == 0:
+                    continue
+                if dayidx > 4:
+                    continue
+
+                date = datetime.date(year=self.kwargs["year"], month=self.kwargs["month"], day=week[dayidx])
+                mydays = kindergarten.day_set.filter(date=date)
+
+                if len(mydays) == 0:
+                    day = Day(date=date, kindergarten=kindergarten)
+                    day.save()
+                else:
+                    day = mydays[0]
+
+
+                for child in childern:
+                    if dayidx == 0 and child.monday and not child.days.filter(date=day.date):
+                        child.days.add(day)
+                    if dayidx == 1 and child.thuesday and not child.days.filter(date=day.date):
+                        child.days.add(day)
+                    if dayidx == 2 and child.wednesday and not child.days.filter(date=day.date):
+                        child.days.add(day)
+                    if dayidx == 3 and child.thursday and not child.days.filter(date=day.date):
+                        child.days.add(day)
+                    if dayidx == 4 and child.friday and not child.days.filter(date=day.date):
+                        child.days.add(day)
+                    child.save()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -211,8 +271,8 @@ class CalendarView(generic.ListView):
             teacher = Teacher.objects.get(user=user)
             kg = teacher.kindergarten
             context["teacher"] = teacher
-            t_days = teacher.day_set.filter(**month_filter)
-            t_present = teacher.present_set.filter(**month_filter)
+            t_days = teacher.days.filter(**month_filter)
+            t_present = teacher.present.filter(**month_filter)
         except ObjectDoesNotExist as exp:
             parent = Parent.objects.get(user=user)
             kg = parent.kindergarten
@@ -250,7 +310,6 @@ class CalendarView(generic.ListView):
             month = 12
 
         time_delta_backward = datetime.timedelta(days=calendar.monthrange(year, month)[1])
-        print(time_delta_backward)
         next_month_day = datetime.date(year=self.kwargs["year"], month=self.kwargs["month"], day=1) + time_delta_forward
         previous_month_day = datetime.date(year=self.kwargs["year"], month=self.kwargs["month"], day=1) - time_delta_backward
         context['previous_month'] = previous_month_day.month

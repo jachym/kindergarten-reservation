@@ -133,20 +133,41 @@ class Child(models.Model):
     diet = models.TextField(blank=True)
     notes = models.TextField(blank=True)
 
+    monday = models.BooleanField(blank=False, default=False)
+    thuesday = models.BooleanField(blank=False, default=False)
+    wednesday = models.BooleanField(blank=False, default=False)
+    thursday = models.BooleanField(blank=False, default=False)
+    friday = models.BooleanField(blank=False, default=False)
+
     days = models.ManyToManyField("Day", blank=True, related_name="child_day_planned")
     present = models.ManyToManyField("Day", blank=True, related_name="child_day_present")
 
+    @property
     def kindergarten(self):
         return self.parent.kindergarten
+
+    #@property
+    #def absent(self):
+
+    #    absent = self.days.all().exclude(date__in=[d.date for d in self.present.all()])
+    #    return absent
 
     @property
     def absent(self):
 
-        absent = self.days.all().exclude(date__in=[d.date for d in self.present.all()])
-        return absent
+        today = datetime.today()
+        year = today.year
+        if today.month < 9:
+            year = year - 1
+
+        start = mydate(year=year, month=9, day=1)
+        print(start)
+
+        return self.days.filter(date__gte=start).exclude(
+            date__in=[d.date for d in self.present.all()]
+        )
 
     def compensation(self, today=None):
-        days = []
         months = self.kindergarten.compensation_length
         if today is None:
             today = datetime.today()
