@@ -1,0 +1,46 @@
+{% extends './base.html' %}
+
+{% block content %}
+
+<table class="table">
+        <tr>
+                <th>Jméno</th>
+                <td>
+                        {{ parent.user.first_name }}
+                        {{ parent.user.last_name }}
+                </td>
+        </tr>
+        <tr>
+                <th>telefon</th>
+                <td>{{ parent.phone }}</a>
+                </td>
+        </tr>
+        <tr>
+                <th>e-mail</th>
+                <td>{{ parent.user.email }}</td>
+        </tr>
+</table>
+
+<h3>Děti</h3>
+<table class="table">
+    <tr><th>Dítko</th><th>absence poslední 3 měsíce</th><th>absence od začátku roku</th></tr>
+    {% for child in childern %}
+    <tr>
+        <td>
+            <a href="{% url 'child' child.uuid %}">
+            {{ child.first_name }}
+            {{ child.middle_name }}
+            {{ child.last_name }}
+            </a>
+        </td>
+        <td>
+            ...
+        </td>
+        <td>
+            ...
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

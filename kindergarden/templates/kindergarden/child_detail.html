@@ -1,0 +1,45 @@
+{% extends './base.html' %}
+
+{% block content %}
+
+<table class="table">
+        <tr>
+                <th>Jméno</th>
+                <td>
+                        {{ child.first_name }}
+                        {{ child.middle_name }}
+                        {{ child.last_name }}
+                </td>
+        </tr>
+        <tr>
+                <th>Rodič</th>
+                <td><a href="{% url 'parent' child.parent.pk %}">{{ parent.user.first_name }} {{ parent.user.last_name }}</a>
+                </td>
+        </tr>
+        <tr>
+                <th>Dieta</th>
+                <td>{{ child.diet }}</td>
+        </tr>
+        <tr>
+                <th>Poznámka</th>
+                <td>{{ child.notes }}</td>
+        </tr>
+        <tr>
+                <th>Absence (poslední 3 měsíce)</th>
+                <td>
+                    {{ child.compensation | length }}
+                    <ul>
+                        {% for c in child.compensation %}
+                        <li> <a href="/{{ c.date.year }}/{{ c.date.month }}/{{ c.date.day }}/">{{ c.date }}</li>
+                        {% endfor %}
+
+                    </ul>
+                </td>
+        </tr>
+        <!--tr>
+                <th>Absence (od začátku roku)</th>
+                <td>{{ absent_year }}</td>
+        </tr-->
+</table>
+
+{% endblock %}
