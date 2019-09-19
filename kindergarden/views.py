@@ -1,33 +1,74 @@
-from django.shortcuts import render
-
-from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib.auth.decorators import user_passes_test
 from django.urls import reverse
+import csv
 
-from datetime import datetime
+from .serializers import DaySerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+import datetime
 import calendar
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.views import generic
 from django.utils.safestring import mark_safe
 from django.contrib.auth import authenticate, login
 
 from .models import Day, Teacher, Kindergarten, Parent, Child
 from .utils import Calendar
-import datetime
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-import calendar
 
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from .utils import plan_month
 
+
+class MonthView(LoginRequiredMixin, UserPassesTestMixin, generic.ListView):
+
+    model = Day
+
+    def test_func(self):
+        return is_admin_teacher(self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        teacher = Teacher.objects.get(user=self.request.user)
+        kindergarten = teacher.kindergarten
+        response = HttpResponse(content_type="text/csv")
+        year = self.kwargs["year"]
+        month = self.kwargs["month"]
+        dates = []
+        for w in calendar.monthcalendar(year, month):
+            for d in w:
+                if d > 0:
+                    dates.append(d)
+
+        response["Content-Disposition"] = "attachment; filename=\"dochazka_{}-{}.csv\"".format(
+            year, month)
+
+        writer = csv.writer(response)
+        writer.writerow(["Jméno"] + dates)
+        for child in kindergarten.childern:
+            present_list = child.present_list(year, month)
+            writer.writerow([child.name] + [present_list[d] for d in present_list])
+
+        return response
+
+    def get_queryset(self):
+        teacher = Teacher.objects.get(user=self.request.user)
+        kindergarten = teacher.kindergarten
+        year = self.kwargs["year"]
+        month = self.kwargs["month"]
+        month_range = calendar.monthrange(year, month)
+        return Day.objects.filter(
+            kindergarten=kindergarten,
+            date__gte=datetime.date(year=year, month=month, day=1),
+            date__lte=datetime.date(year=year, month=month, day=month_range[1]),
+        )
 
 class ParentView(LoginRequiredMixin, generic.DetailView):
 
     model = Parent
-    #model = User
-    #context_object_name = 'foo'
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -35,6 +76,12 @@ class ParentView(LoginRequiredMixin, generic.DetailView):
         # Add in a QuerySet of all the books
         context['childern'] = Child.objects.filter(parent=self.object)
         return context
+
+    def get_object(self, **kwargs):
+        if not "pk" in self.kwargs:
+            return get_object_or_404(Parent, user=self.request.user)
+        else:
+            return get_object_or_404(Parent, pk=self.kwargs["pk"])
 
 
 class TeacherView(LoginRequiredMixin, generic.DetailView):
@@ -49,6 +96,12 @@ class TeacherView(LoginRequiredMixin, generic.DetailView):
         # Add in a QuerySet of all the books
         context['kindergarten'] = self.object.kindergarten
         return context
+
+    def get_object(self, **kwargs):
+        if not "pk" in self.kwargs:
+            return get_object_or_404(Teacher, user=self.request.user)
+        else:
+            return get_object_or_404(Teacher, pk=self.kwargs["pk"])
 
 def kgview(request, uri_name):
     print(uri_name)
@@ -66,6 +119,34 @@ class KindergartenView(generic.DetailView):
         #context['childern'] = Child.objects.filter()
         return context
 
+def _get_day_index(day_name):
+    days = ["monday", "tuesday", "wednesday", "thursday", "friday",
+            "saturday", "sunday"]
+
+    return days.index(day_name.lower())
+
+
+class DayOfWeekView(LoginRequiredMixin, APIView):
+    """
+    List all snippets, or create a new snippet.
+    """
+    def get(self, request, year, month, day):
+        day = self.get_object(year, month, day)
+        serializer = DaySerializer(day, many=False)
+        return Response(serializer.data)
+
+    def get_object(self, year, month, day_name):
+        #day_name = self.kwargs["day"].lower()
+        #year = self.kwargs["year"]
+        #month = self.kwargs["month"]
+        today = datetime.date.today()
+
+        cal = calendar.monthcalendar(year, month)
+        for week in cal:
+            date_number = week[_get_day_index(day_name)] 
+            if date_number > 0 and date_number >= today.day:
+                return Day.objects.get(date=datetime.date(year=year, month=month, day=date_number))
+
 
 class DayView(LoginRequiredMixin, generic.DetailView):
 
@@ -76,19 +157,19 @@ class DayView(LoginRequiredMixin, generic.DetailView):
         user = self.request.user
         try:
             teacher = Teacher.objects.get(user=user)
-            kg = teacher.kindergarten
+            self.kg = teacher.kindergarten
         except ObjectDoesNotExist as exp:
             parent = Parent.objects.get(user=user)
-            kg = parent.kindergarten
+            self.kg = parent.kindergarten
 
-        return get_object_or_404(Day, kindergarten=kg,
+        return get_object_or_404(Day, kindergarten=self.kg,
                date=datetime.date(self.kwargs["year"], self.kwargs["month"], self.kwargs["day"]))
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
 
-        parents = Parent.objects.filter(user=self.request.user)
+        parents = Parent.objects.filter(user=self.request.user, kindergarten=self.kg)
         if len(parents):
             context["parent"] = self.get_parent_context(parents[0])
 
@@ -122,8 +203,6 @@ class DayView(LoginRequiredMixin, generic.DetailView):
         context["childern_planned"] = [ch.pk for ch in childern_planned]
         context["childern_present"] = [ch.pk for ch in childern_present]
         context["childern_all"] = childern_all
-        context["planned"] = day in teacher.days.all()
-        context["present"] = day in teacher.present.all()
         return context
 
 
@@ -142,7 +221,6 @@ class ChildView(generic.DetailView):
         context["parent"] = self.object.parent
         # Add in a QuerySet of all the books
         #context['childern'] = Child.objects.filter()
-        print(self.object.parent)
         return context
 
 @login_required
@@ -158,6 +236,18 @@ def index(request):
 
     if user is not None:
         login(request, user)
+
+        parents = Parent.objects.filter(user=user)
+        if len(parents):
+            url = reverse("parent")
+            return HttpResponseRedirect(url)
+
+        teachers = Teacher.objects.filter(user=user)
+        if len(teachers):
+            url = reverse("teacher")
+            return HttpResponseRedirect(url)
+
+
         return HttpResponse('hello {}'.format(user.first_name))
         # Redirect to a success page.
     else:
@@ -206,73 +296,39 @@ class CalendarView(generic.ListView):
     def post(self, request, *args, **kwargs):
         self.teacher = get_teacher(self.request)
         if self.teacher.is_admin:
-            self.plan_month()
+            plan_month(self.teacher.kindergarten, self.kwargs["year"],
+                    self.kwargs["month"])
             url = reverse("month", args=[self.kwargs["year"], self.kwargs["month"]])
             return HttpResponseRedirect(url)
         else:
             self.get()
 
-    def plan_month(self):
-
-        kindergarten = self.teacher.kindergarten
-
-        childern = []
-        for par in Parent.objects.filter(kindergarten=kindergarten):
-            for child in par.child_set.all():
-                childern.append(child)
-
-        days = calendar.monthcalendar(self.kwargs["year"], self.kwargs["month"])
-        for week in days:
-            for dayidx in list(range(len(week)-1)):
-                if week[dayidx] == 0:
-                    continue
-                if dayidx > 4:
-                    continue
-
-                date = datetime.date(year=self.kwargs["year"], month=self.kwargs["month"], day=week[dayidx])
-                mydays = kindergarten.day_set.filter(date=date)
-
-                if len(mydays) == 0:
-                    day = Day(date=date, kindergarten=kindergarten)
-                    day.save()
-                else:
-                    day = mydays[0]
-
-
-                for child in childern:
-                    if dayidx == 0 and child.monday and not child.days.filter(date=day.date):
-                        child.days.add(day)
-                    if dayidx == 1 and child.thuesday and not child.days.filter(date=day.date):
-                        child.days.add(day)
-                    if dayidx == 2 and child.wednesday and not child.days.filter(date=day.date):
-                        child.days.add(day)
-                    if dayidx == 3 and child.thursday and not child.days.filter(date=day.date):
-                        child.days.add(day)
-                    if dayidx == 4 and child.friday and not child.days.filter(date=day.date):
-                        child.days.add(day)
-                    child.save()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        today = datetime.date.today()
+        if "year" in self.kwargs:
+            year = self.kwargs["year"]
+            month = self.kwargs["month"]
+        else:
+            year = today.year
+            month = today.month
 
         user = self.request.user
-        t_present = []
-        t_days = []
         ch_reserved = []
         ch_present = []
-        teacher = False
 
         month_filter = {
 
-                "date__year": self.kwargs["year"],
-                "date__month": self.kwargs["month"]
+                "date__year": year,
+                "date__month": month
         }
+        context["year"] = year
+        context["month"] = month
         try:
             teacher = Teacher.objects.get(user=user)
             kg = teacher.kindergarten
             context["teacher"] = teacher
-            t_days = teacher.days.filter(**month_filter)
-            t_present = teacher.present.filter(**month_filter)
         except ObjectDoesNotExist as exp:
             parent = Parent.objects.get(user=user)
             kg = parent.kindergarten
@@ -286,43 +342,82 @@ class CalendarView(generic.ListView):
         d = get_date(self.request.GET.get('day', None))
 
         # Instantiate our calendar class with today's year and date
-        cal = Calendar(datetime.date(year=self.kwargs["year"],
-            month=self.kwargs["month"], day=1))
+        cal = Calendar(datetime.date(year=year,
+            month=month, day=1))
 
         # Call the formatmonth method, which returns our calendar as a table
         html_cal = cal.formatmonth(
                 teacher=teacher,
                 withyear=True,
                 days=days,
-                teacher_present=t_present,
-                teacher_service=t_days,
                 childern_present=ch_present,
                 childern_reserved=ch_reserved
         )
         context['calendar'] = mark_safe(html_cal)
-        d = get_date(self.request.GET.get('month', None))
-        this_day = datetime.datetime.today().date()
-        time_delta_forward = datetime.timedelta(days=calendar.monthrange(self.kwargs["year"], self.kwargs["month"])[1])
-        month = self.kwargs["month"] - 1
-        year = self.kwargs["year"]
-        if month == 0:
-            year -= 1
-            month = 12
 
-        time_delta_backward = datetime.timedelta(days=calendar.monthrange(year, month)[1])
-        next_month_day = datetime.date(year=self.kwargs["year"], month=self.kwargs["month"], day=1) + time_delta_forward
-        previous_month_day = datetime.date(year=self.kwargs["year"], month=self.kwargs["month"], day=1) - time_delta_backward
+        time_delta_forward = datetime.timedelta(days=calendar.monthrange(year, month)[1])
+
+        if month == 1:
+            prev_month = 12
+            prev_year = year - 1
+        else:
+            prev_month = month - 1
+            prev_year = year
+
+        time_delta_backward = datetime.timedelta(days=calendar.monthrange(prev_year, prev_month)[1])
+        next_month_day = datetime.date(year=year, month=month, day=1) + time_delta_forward
+
+        previous_month_day = datetime.date(year=year, month=month, day=1) - time_delta_backward
         context['previous_month'] = previous_month_day.month
         context['previous_year'] = previous_month_day.year
         context['next_month'] = next_month_day.month
         context['next_year'] = next_month_day.year
-        context['this_month'] = this_day.month
-        context['this_year'] = this_day.year
+        context['this_month'] = today.month
+        context['this_year'] = today.year
         context["kindergarden"] = kg
         return context
 
-def save_day(request, kindergarten, day):
-    pass
+
+def is_admin_teacher(user):
+    Teacher.objects.get(user=user)
+    return Teacher.is_admin
+
+
+@user_passes_test(is_admin_teacher)
+@login_required
+def save_day(request, year, month, day):
+    day = Day.objects.get(date=datetime.date(year, month, day))
+    form = request.POST
+    kindergarten = Teacher.objects.get(user=request.user).kindergarten
+    for child in kindergarten.childern:
+
+        if "child-{}-present".format(child.pk) in form:
+            if not day in child.present.all():
+                child.present.add(day)
+        else:
+            if day in child.present.all():
+                child.present.remove(day)
+
+        if "child-{}-planned".format(child.pk) in form:
+            if not day in child.days.all():
+                if day.capacity > day.child_day_planned.count():
+                    child.days.add(day)
+                else:
+                    from .utils import CapacityFilled
+                    raise CapacityFilled(day, child)
+
+            c_key = "child-{}-compensation".format(child.pk)
+            if c_key in form and form[c_key] is not "":
+                c_year, c_month, c_day = map(lambda x: int(x), form[c_key].split("-"))
+                compensate_date = datetime.date(c_year, c_month, c_day)
+                child.days.remove(Day.objects.get(date=compensate_date, kindergarten=kindergarten))
+        else:
+            if day in child.days.all():
+                child.days.remove(day)
+
+    url = reverse("day", args=[day.date.year, day.date.month, day.date.day])
+    return HttpResponseRedirect(url)
+
 
 def get_date(req_day):
     if req_day:

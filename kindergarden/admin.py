@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.urls import resolve
 
 from .models import Kindergarten, Teacher, Parent, Day, Child
+from .forms import ChildAdminForm
 
 class ChildKindergartenListFilter(admin.SimpleListFilter):
     title = _('Kindergarten')
@@ -31,16 +32,6 @@ class ChildPresentInline(admin.TabularInline):
     extra = 0
     verbose_name = _("Present day")
 
-class TeacherDaysInline(admin.TabularInline):
-    model = Teacher.days.through
-    extra = 0
-    verbose_name = _("Planned day")
-
-class TeacherPresentInline(admin.TabularInline):
-    model = Teacher.present.through
-    extra = 0
-    verbose_name = _("Present day")
-
 class KindergartenAdmin(admin.ModelAdmin):
     list_display = (
         "name", "phone", "email", "web")
@@ -51,10 +42,6 @@ class TeacherAdmin(admin.ModelAdmin):
 
     list_filer = ("kindergarten")
     exclude = ("days", "present")
-
-    inlines = [
-            TeacherDaysInline, TeacherPresentInline
-    ]
 
     def name(self, teacher):
         return teacher.name
@@ -88,18 +75,18 @@ class ChildAdmin(admin.ModelAdmin):
     ]
     exclude = ("days", "present")
 
+    def get_form(self, request, obj=None, **kwargs):
+        if request.user.is_superuser:
+            kwargs['form'] = ChildAdminForm
+        return super().get_form(request, obj, **kwargs)
+
 class ChildInline(admin.TabularInline):
     model = Child.days.through
     extra = 0
 
-class TeachersInline(admin.TabularInline):
-    model = Teacher.days.through
-    extra = 0
-
-
 class DayAdmin(admin.ModelAdmin):
     inlines = [
-            ChildInline, TeachersInline
+            ChildInline
     ]
     exclude = ("days", "teachers")
     list_display = ("date", "capacity", "kindergarten", "childern_planned",

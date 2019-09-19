@@ -69,6 +69,10 @@ class Kindergarten(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def childern(self):
+        return Child.objects.filter(parent__kindergarten=self)
+
 
 
 class Teacher(models.Model):
@@ -77,8 +81,8 @@ class Teacher(models.Model):
                                     on_delete=models.CASCADE)
     phone = models.CharField( max_length=20,)
 
-    days = models.ManyToManyField("Day", blank=True, related_name="teacher_day_planned")
-    present = models.ManyToManyField("Day", blank=True, related_name="teacher_day_present")
+    #days = models.ManyToManyField("Day", blank=True, related_name="teacher_day_planned")
+    #present = models.ManyToManyField("Day", blank=True, related_name="teacher_day_present")
     is_admin = models.BooleanField(blank=True, default=False)
 
     @property
@@ -133,11 +137,16 @@ class Child(models.Model):
     diet = models.TextField(blank=True)
     notes = models.TextField(blank=True)
 
-    monday = models.BooleanField(blank=False, default=False)
-    thuesday = models.BooleanField(blank=False, default=False)
-    wednesday = models.BooleanField(blank=False, default=False)
-    thursday = models.BooleanField(blank=False, default=False)
-    friday = models.BooleanField(blank=False, default=False)
+    monday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"monday-check\"></div>")
+    tuesday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"tuesday-check\"></div>")
+    wednesday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"wednesday-check\"></div>")
+    thursday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"thursday-check\"></div>")
+    friday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"friday-check\"></div>")
 
     days = models.ManyToManyField("Day", blank=True, related_name="child_day_planned")
     present = models.ManyToManyField("Day", blank=True, related_name="child_day_present")
@@ -152,6 +161,29 @@ class Child(models.Model):
     #    absent = self.days.all().exclude(date__in=[d.date for d in self.present.all()])
     #    return absent
 
+    def present_list(self, year, month):
+
+        mylist = {}
+
+        for week in calendar.monthcalendar(year, month):
+            for day_nr in week:
+                if day_nr == 0:
+                    continue
+                date = mydate(year, month, day_nr)
+
+                reserved = self.days.filter(date=date).count() == 1
+                present = self.present.filter(date=date).count() == 1
+                if reserved and present:
+                    mylist[date] = True
+                elif reserved and not present:
+                    mylist[date] = False
+                elif not reserved and not present:
+                    mylist[date] = None
+
+        return mylist
+
+                
+
     @property
     def absent(self):
 
@@ -161,11 +193,15 @@ class Child(models.Model):
             year = year - 1
 
         start = mydate(year=year, month=9, day=1)
-        print(start)
 
-        return self.days.filter(date__gte=start).exclude(
+        return self.days.filter(date__gte=start,
+                date__lt=today).exclude(
             date__in=[d.date for d in self.present.all()]
         )
+
+    @property
+    def first_compensation(self):
+        return self.compensation()[0]
 
     def compensation(self, today=None):
         months = self.kindergarten.compensation_length
@@ -187,7 +223,23 @@ class Child(models.Model):
         days_compensate = self.absent.filter(date__gte=last_date)
         return days_compensate
 
+    def save(self, *args, **kwargs):
+        from .utils import plan_month
 
+        super().save(*args, **kwargs)
+
+        # plan this month and next month automatically
+        today = datetime.today()
+        plan_month(self.kindergarten, today.year, today.month)
+
+        if today.month == 12:
+            month = 1
+            year = today.year + 1
+        else:
+            month = today.month + 1
+            year = today.year
+
+        plan_month(self.kindergarten, year, month)
 
     @property
     def name(self):

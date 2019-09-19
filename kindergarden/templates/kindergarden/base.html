@@ -8,28 +8,70 @@
   <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css">
-  <link rel="stylesheet" type="text/css" href="{% static 'kg_reservation/css/style.css' %}">
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="{% static 'kindergarten/css/style.css' %}">
   <title></title>
 </head>
 <body>
-    <nav>Přihlášený: {{ user.first_name }} {{ user.last_name }}</nav>
-  <h1>{{ kindergarten.name }}</h1>
-  {% block content %}
-  {% endblock %}
+    <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow fixed-top">
+  <div class="container">
+     <a class="navbar-brand" href="/contact">{{ kindergarten.name }}</a>
+     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'calendar' %}">Kalendář</a>
+        </li>
+        <li class="nav-item">
 
-  <!-- Optional JavaScript -->
-  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-    crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-    crossorigin="anonymous"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-    crossorigin="anonymous"></script>
+        {% if parent %}
+            <a class="nav-link" href="{% url 'parent' %}">Moje stránka</a>
+        {% else %}
+            <a class="nav-link" href="{% url 'teacher' %}">Moje stránka</a>
+        {% endif %}
 
-  {% block script %}
-  {% endblock %}
+        </li>
+        {% if user %}
+        <li class="nav-item">
+                <a class="nav-link" href="{% url 'logout' %}">Odhlásit</a> </span>
+        </li>
+        <li class="nav-item">
+            <span class="navbar-text">{{ user.first_name }} {{ user.last_name }}
+        </li>
+            {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Full Page Image Header with Vertically Centered Content -->
+<header class="masthead">
+  <div class="container h-100">
+    <div class="row h-100 align-items-center">
+      <div class="col-12 text-center">
+          <h1>&nbsp;</h1>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Page Content -->
+<section class="py-5">
+  <div class="container">
+    <h2 class="font-weight-light">Učitel</h2>
+    {% block content %}
+    {% endblock %}
+
+    {% block script %}
+    {% endblock %}
+  </div>
+</section>
+
+
 </body>
 </html>
