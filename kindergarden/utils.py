@@ -37,21 +37,19 @@ class Calendar(HTMLCalendar):
                     ch_present = len(day.child_day_present.all())
                     d += f'<tr><th>Přítomných:</th><td>{ch_present}</td></tr>'
 
-            d += '<ul>'
-
             if day.date >= today:
                 for child in childern_reserved:
                     child_url = reverse("child", args=[child.uuid])
                     if day in childern_reserved[child]:
-                        d += f"<li class=\"child-reserved\"><a href=\"{child_url}\" title=\"rezervováno\">{child}</a></li>"
+                        d += f"<tr><td class=\"child-reserved\"><a href=\"{child_url}\" title=\"rezervováno\">{child}</a></td></tr>"
             else:
                 for child in childern_present:
                     child_url = reverse("child", args=[child.uuid])
                     if day in childern_present[child]:
-                        d += f"<li class=\"child-present\"><a href=\"{child_url}\" title=\"přítomno\">{child}</a></li>"
+                        d += f"<tr><td class=\"child-present\"><a href=\"{child_url}\" title=\"přítomno\">{child}</a></td></tr>"
                     elif day in childern_reserved[child]:
-                        d += f"<li class=\"child-absent\"><a href=\"{child_url}\" title=\"chybělo\">{child}</a></li>"
-            d += '</ul>'
+                        d += f"<tr><td class=\"child-absent\"><a href=\"{child_url}\" title=\"chybělo\">{child}</a></td></tr>"
+
             url = reverse("day", args=[self.year, self.month, day.date.day])
             d = f'<table class="table"><thead class="thead-light"><tr><th colspan="2"><a style="width:100%" href=\"{url}\"><span style="width:100%">{md}</span></a></th></thead><tbody>{d}</tbody></table>'
             if day.date == today:

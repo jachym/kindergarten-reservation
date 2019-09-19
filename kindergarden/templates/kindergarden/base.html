@@ -11,39 +11,48 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 <script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="{% static 'kindergarten/css/style.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'kindergarden/css/style.css' %}">
   <title></title>
 </head>
 <body>
     <!-- Navigation -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light shadow fixed-top">
   <div class="container">
-     <a class="navbar-brand" href="/contact">{{ kindergarten.name }}</a>
+      {% if kindergarten %}
+      <a class="navbar-brand" href="{% url 'kindergarden' kindergarten.uri_name %}">{{ kindergarten.name }}</a>
      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
+    {% endif %}
     <div class="collapse navbar-collapse" id="navbarResponsive">
       <ul class="navbar-nav ml-auto">
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'calendar' %}">Kalendář</a>
-        </li>
-        <li class="nav-item">
+        {% if parent or teacher %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'calendar' %}">Kalendář</a>
+            </li>
+            <li class="nav-item">
 
-        {% if parent %}
-            <a class="nav-link" href="{% url 'parent' %}">Moje stránka</a>
-        {% else %}
-            <a class="nav-link" href="{% url 'teacher' %}">Moje stránka</a>
-        {% endif %}
-
-        </li>
-        {% if user %}
-        <li class="nav-item">
-                <a class="nav-link" href="{% url 'logout' %}">Odhlásit</a> </span>
-        </li>
-        <li class="nav-item">
-            <span class="navbar-text">{{ user.first_name }} {{ user.last_name }}
-        </li>
+            {% if parent %}
+                <a class="nav-link" href="{% url 'parent' %}">Moje stránka</a>
+            {% elif teacher %}
+                <a class="nav-link" href="{% url 'teacher' %}">Moje stránka</a>
             {% endif %}
+
+            </li>
+            <li class="nav-item">
+                <span class="navbar-text">{{ user.first_name }} {{ user.last_name }}</span>
+            </li>
+            <li class="nav-item">
+                <span class="navbar-text">|</span>
+            </li>
+            <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">Odhlásit</a>
+            </li>
+        {% else %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'login' %}">Přihlásit</a>
+            </li>
+        {% endif %}
       </ul>
     </div>
   </div>
@@ -54,7 +63,6 @@
   <div class="container h-100">
     <div class="row h-100 align-items-center">
       <div class="col-12 text-center">
-          <h1>&nbsp;</h1>
       </div>
     </div>
   </div>
@@ -63,7 +71,7 @@
 <!-- Page Content -->
 <section class="py-5">
   <div class="container">
-    <h2 class="font-weight-light">Učitel</h2>
+    <h2 class="font-weight-light">&nbsp;</h2>
     {% block content %}
     {% endblock %}
 

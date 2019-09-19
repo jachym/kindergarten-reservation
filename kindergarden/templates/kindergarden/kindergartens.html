@@ -1,0 +1,23 @@
+<!-- kg_reservation/templates/kg_reservation/calendar.html -->
+
+{% extends './base.html' %}
+
+{% block content %}
+<h3>Seznam školek</h3>
+
+<div class="table-responsive">
+    <table class="table">
+{% for kg in object_list %}
+<tr>
+    <th><a href="{% url 'kindergarden' kg.uri_name %}">{{ kg.name }}</a></th>
+    <td>{{ kg.phone }}</td>
+    <td>{{ kg.email }}</td>
+    <td>{{ kg.address }}</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+
+{{ calendar }}
+{% endblock %}

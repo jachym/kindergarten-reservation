@@ -14,28 +14,32 @@
 </div>
 
 {% if parent %}
-<h3>Rodičovský pohled</h3>
+<h3>Moje děti</h3>
 <form method="post" action="{% url 'day-save' day.date.year day.date.month day.date.day  %} ">
 <div class="table-responsive">
 <table class="table">
     <tr><th>Děcko</th><th>Rezervováno</th><th>Přítomno</th></tr>
     {% for child in parent.childern_all %}
     <tr>
-        <td>{{ child.first_name }} {{ child.middle_name }} {{ child.last_name }}</td>
+        <td><a href="{% url 'child' child.uuid %}">{{ child.first_name }} {{ child.middle_name }} {{ child.last_name }}</a></td>
         <td>
+            {% if not past %}
             <input class="form-check-input" type="checkbox" name="planned" {% if child.pk in parent.childern_planned %} checked="checked"{% endif %} />
+            {% else %}
+                {% if child.pk in parent.childern_planned %} ANO {% else %} NE {% endif %}
+            {% endif %}
         </td>
         <td>{% if child.pk in parent.childern_present %} ANO {% else %} NE {% endif %}</td>
     </tr>
     {% endfor %}
 </table>
 </div>
-<input type="submit" value="Uložit"></input>
+<input class="btn btn-primary" type="submit" value="Uložit"></input>
 </form>
 {% endif %}
 
 {% if teacher %}
-<h3>Učitelský pohled pohled</h3>
+<h3>Seznam dětí</h3>
 <form method="post" action="{% url 'day-save' day.date.year day.date.month day.date.day  %} ">
 {% csrf_token %}
 
@@ -43,7 +47,7 @@
     <tr><th>Děcko</th><th>Rezervováno</th><th>Přítomno</th></tr>
     {% for child in teacher.childern_all %}
     <tr>
-        <td>{{ child.first_name }} {{ child.middle_name }} {{ child.last_name }}</td>
+            <td><a href="{% url 'child' child.uuid %}">{{ child.first_name }} {{ child.middle_name }} {{ child.last_name }}</a></td>
         <td>
             {% if teacher.teacher.is_admin and day.capacity > day.child_day_planned.count %}
             <input class="form-check-input" type="checkbox" name="child-{{ child.pk }}-planned" {% if child.pk in teacher.childern_planned %}checked="checked"{% endif %}></input>

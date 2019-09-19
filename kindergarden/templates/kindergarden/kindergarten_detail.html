@@ -1,11 +1,51 @@
 {% extends './base.html' %}
 
 {% block content %}
+<h3>Kontakt</h3>
+<div class="table-responsive">
 <table class="table">
-    <tr><td>Jméno</td><td>{{ kindergarten.name }}</td></tr>
-    <tr><td>Adresa</td><td>{{ kindergarten.address }}</td></tr>
-    <tr><td>Telefon</td><td>{{ kindergarten.phone }}</td></tr>
-    <tr><td>e-mail</td><td>{{ kindergarten.email }}</td></tr>
-    <tr><td>Web</td><td>{{ kindergarten.web }}</td></tr>
+    <tr><th>Jméno</th><td>{{ kindergarten.name }}</td></tr>
+    <tr><th>Adresa</th><td>{{ kindergarten.address }}</td></tr>
+    <tr><th>Telefon</th><td>{{ kindergarten.phone }}</td></tr>
+    <tr><th>e-mail</th><td>{{ kindergarten.email }}</td></tr>
+    <tr><th>Web</th><td><a href="{{ kindergarten.web }}">{{ kindergarten.web }}</a></td></tr>
 </table>
+</div>
+
+{% if teachers %}
+<h3>Kontakty</h3>
+<div class="table-responsive">
+<table class="table">
+    <thead><tr><th>Jméno</th><th>telefon</th><th>e-mail</th></tr></thead>
+    <tbody>
+    {% for teacher in teachers %}
+    <tr>
+        <td><a href="{% url 'teacher' teacher.pk %}">{{ teacher.name }}</a></td>
+        <td>{{ teacher.email }}</td>
+        <td>{{ teacher.phone }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+
+{% if childern %}
+<h3>Dítka</h3>
+<div class="table-responsive">
+<table class="table">
+    <thead><tr><th>Jméno</th><th>Rodič</th><th>Absence (poslední 3 měsíce)</th><th>Poznámka</th></tr></thead>
+    <tbody>
+    {% for child in childern %}
+    <tr>
+        <td><a href="{% url 'child' child.uuid %}">{{ child.name }}</a></td>
+        <td><a href="{% url 'parent' child.parent.pk %}">{{ child.parent }}</a></td>
+        <td>{{ child.compensation | length }}</td>
+        <td>{{ child.notes }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
 {% endblock %}

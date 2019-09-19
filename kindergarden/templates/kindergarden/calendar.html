@@ -3,10 +3,25 @@
 {% extends './base.html' %}
 
 {% block content %}
+<h3>Kalendář</h3>
 <div class="clearfix">
-	<a class="btn btn-info left" href="{% url 'month' previous_year previous_month %}">Předchozí měsíc</a>
-	<a class="btn btn-info middle" href="{% url 'month' this_year this_month %}">Tento měsíc</a>
-	<a class="btn btn-info right" href="{% url 'month' next_year next_month %}">Další měsíc</a>
+</div>
+
+<div class="btn-toolbar" role="toolbar" aria-label="Ovládání">
+  <div class="btn-group mr-2" role="group" aria-label="Navigace">
+	<a class="btn btn-info btn-secondary" href="{% url 'month' previous_year previous_month %}">Předchozí měsíc</a>
+	<a class="btn btn-info btn-secondary" href="{% url 'month' this_year this_month %}">Tento měsíc</a>
+	<a class="btn btn-info btn-secondary" href="{% url 'month' next_year next_month %}">Další měsíc</a>
+  </div>
+    {% if teacher and teacher.is_admin %}
+  <div class="btn-group mr-2" role="group" aria-label="Plánování">
+    <form method="post">
+        <input class="btn btn-secondary" type="submit" value="Naplánovat měsíc" />
+        <input class="btn btn-secondary" type="button" onclick="javascript:window.location.href='{% url 'month_report' year month %}'" value="Docházka" />
+        {% csrf_token %}
+    </form>
+  </div>
+    {% endif %}
 </div>
 
 {% if parent %}
@@ -22,18 +37,6 @@
 </table>
 {% endif %}
 
-<h3>Kalendář</h3>
-
-{{ teacher }}
-
-{% if teacher and teacher.is_admin %}
-
-<form method="post">
-    <input class="btn btn-info" type="submit" value="Naplánovat měsíc" />
-    <input class="btn btn-info" type="button" onclick="javascript:window.location.href='{% url 'month_report' year month %}'" value="Docházka" />
-    {% csrf_token %}
-</form>
-{% endif %}
 
 {{ calendar }}
 {% endblock %}

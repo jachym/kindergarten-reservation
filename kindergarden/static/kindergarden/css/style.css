@@ -199,8 +199,8 @@ td.today {
 }
 
 .masthead {
-  height: 100vh;
-  min-height: 500px;
+  height: 10vh;
+  min-height: 50px;
   background-image: url('https://source.unsplash.com/BtbjCFUvBXs/1920x1080');
   background-size: cover;
   background-position: center;

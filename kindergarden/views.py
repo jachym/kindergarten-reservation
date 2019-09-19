@@ -12,7 +12,7 @@ import calendar
 from django.shortcuts import get_object_or_404
 from django.views import generic
 from django.utils.safestring import mark_safe
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login 
 
 from .models import Day, Teacher, Kindergarten, Parent, Child
 from .utils import Calendar
@@ -75,6 +75,7 @@ class ParentView(LoginRequiredMixin, generic.DetailView):
         context = super().get_context_data(**kwargs)
         # Add in a QuerySet of all the books
         context['childern'] = Child.objects.filter(parent=self.object)
+        context["kindergarten"] = self.object.kindergarten
         return context
 
     def get_object(self, **kwargs):
@@ -82,6 +83,7 @@ class ParentView(LoginRequiredMixin, generic.DetailView):
             return get_object_or_404(Parent, user=self.request.user)
         else:
             return get_object_or_404(Parent, pk=self.kwargs["pk"])
+
 
 
 class TeacherView(LoginRequiredMixin, generic.DetailView):
@@ -110,13 +112,30 @@ class KindergartenView(generic.DetailView):
 
     model = Kindergarten
     slug_field = "uri_name"
-    slug_url_kwarg = 'kg'
 
-    def xxxget_context_data(self, **kwargs):
+    def get_object(self):
+      object = get_object_or_404(Kindergarten,uri_name=self.kwargs['uri_name'])
+      return object
+
+    def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
         # Add in a QuerySet of all the books
-        #context['childern'] = Child.objects.filter()
+
+        if self.request.user and not self.request.user.is_anonymous:
+            teachers = Teacher.objects.filter(user=self.request.user)
+            parents = Parent.objects.filter(user=self.request.user)
+            if teachers.count():
+                teacher = teachers[0]
+                context["teacher"] = teachers
+                context['childern'] = Child.objects.filter(parent__kindergarten=teacher.kindergarten)
+                context['teachers'] = Teacher.objects.filter(kindergarten=teacher.kindergarten)
+            elif parents.count():
+                parent = parents[0]
+                context["parent"] = parent
+                context['teachers'] = Teacher.objects.filter(kindergarten=parent.kindergarten)
+            else:
+                pass
         return context
 
 def _get_day_index(day_name):
@@ -177,6 +196,13 @@ class DayView(LoginRequiredMixin, generic.DetailView):
         if len(teachers):
             context["teacher"] = self.get_teacher_context(teachers[0])
 
+        context["past"] = False
+        now = datetime.datetime.now()
+        latest = datetime.datetime(now.year, now.month, now.day, 20, 00)
+        day = datetime.datetime(self.object.date.year, self.object.date.month, self.object.date.day)
+        if latest > day:
+            context["past"] = True
+
         # Add in a QuerySet of all the books
         #context['childern'] = Child.objects.filter()
         return context
@@ -223,36 +249,9 @@ class ChildView(generic.DetailView):
         #context['childern'] = Child.objects.filter()
         return context
 
-@login_required
-def index(request):
-
-    user = None
-    if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-    elif request.user:
-        user = request.user
-
-    if user is not None:
-        login(request, user)
-
-        parents = Parent.objects.filter(user=user)
-        if len(parents):
-            url = reverse("parent")
-            return HttpResponseRedirect(url)
-
-        teachers = Teacher.objects.filter(user=user)
-        if len(teachers):
-            url = reverse("teacher")
-            return HttpResponseRedirect(url)
-
-
-        return HttpResponse('hello {}'.format(user.first_name))
-        # Redirect to a success page.
-    else:
-        # Return an 'invalid login' error message.
-        return HttpResponse('hello xx')
+class KindergartensView(generic.ListView):
+    model = Kindergarten
+    template_name = 'kindergarden/kindergartens.html'
 
 
 # ==================================================================
@@ -325,16 +324,20 @@ class CalendarView(generic.ListView):
         }
         context["year"] = year
         context["month"] = month
+        teacher = None
+        parent = None
         try:
             teacher = Teacher.objects.get(user=user)
             kg = teacher.kindergarten
             context["teacher"] = teacher
+            context["kindergarten"] = teacher.kindergarten
         except ObjectDoesNotExist as exp:
             parent = Parent.objects.get(user=user)
             kg = parent.kindergarten
             context["parent"] = parent
             ch_reserved = {ch: [d for d in ch.days.filter(**month_filter)] for ch in parent.child_set.all()}
             ch_present = {ch: [d for d in ch.present.filter(**month_filter)] for ch in parent.child_set.all()}
+            context["kindergarten"] = parent.kindergarten
 
         days = Day.objects.filter(kindergarten=kg, **month_filter)
 
@@ -384,7 +387,7 @@ def is_admin_teacher(user):
 
 
 @user_passes_test(is_admin_teacher)
-@login_required
+@login_required(login_url="login")
 def save_day(request, year, month, day):
     day = Day.objects.get(date=datetime.date(year, month, day))
     form = request.POST

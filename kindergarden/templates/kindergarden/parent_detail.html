@@ -2,6 +2,8 @@
 
 {% block content %}
 
+<h3>Detail rodiče</h3>
+<div class="table-responsive">
 <table class="table">
         <tr>
                 <th>Jméno</th>
@@ -20,8 +22,10 @@
                 <td>{{ parent.user.email }}</td>
         </tr>
 </table>
+</div>
 
 <h3>Děti</h3>
+<div class="table-responsive">
 <table class="table">
     <tr><th>Dítko</th><th>absence poslední 3 měsíce</th><th>absence od začátku roku</th></tr>
     {% for child in childern %}
@@ -37,10 +41,11 @@
             {{ child.compensation | length }}
         </td>
         <td>
-            {{ child.absence | length}}
+            {{ child.absent | length}}
         </td>
     </tr>
     {% endfor %}
 </table>
+</div>
 
 {% endblock %}

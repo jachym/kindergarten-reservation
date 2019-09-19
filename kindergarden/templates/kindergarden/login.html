@@ -1,0 +1,21 @@
+<!-- kg_reservation/templates/kg_reservation/calendar.html -->
+
+{% extends './base.html' %}
+
+{% block content %}
+<div class="table">
+<form method="POST" action="{% url 'login' %}" id="login-form">
+  <div class="form-group">
+    <label for="exampleInputEmail1">E-mail nebo přihlašovací jméno</label>
+    <input type="email" name="username" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email">
+    <small id="emailHelp" class="form-text text-muted">Váš e-mail dále nesdílíme</small>
+  </div>
+  <div class="form-group">
+    <label for="exampleInputPassword1">Heslo</label>
+    <input name="password" type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
+  </div>
+  <button type="submit" class="btn btn-primary">Přihlásit</button>
+    {% csrf_token %}
+</form>
+</div>
+{% endblock %}
