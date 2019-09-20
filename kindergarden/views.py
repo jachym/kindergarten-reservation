@@ -160,14 +160,15 @@ class KindergartenView(generic.DetailView):
             else:
                 pass
 
-        teachers = Teacher.objects.filter(user=self.request.user)
-        parents = Parent.objects.filter(user=self.request.user)
-        if teachers.count():
-            context['user_type'] = teachers[0]
-        elif parents.count():
-            context['user_type'] = parent
+        if not self.request.user.is_anonymous:
+            teachers = Teacher.objects.filter(user=self.request.user)
+            parents = Parent.objects.filter(user=self.request.user)
+            if teachers.count():
+                context['user'] = teachers[0]
+            elif parents.count():
+                context['user'] = parent
         else:
-            context["user_type"] = None
+            context["user"] = None
 
         return context
 
