@@ -98,7 +98,7 @@ def plan_month(kindergarten, year, month):
 
     days = monthcalendar(year, month)
     for week in days:
-        for dayidx in list(range(len(week)-1)):
+        for dayidx in list(range(len(week))):
             if week[dayidx] == 0:
                 continue
             if dayidx > 4:

@@ -90,7 +90,7 @@ class DayAdmin(admin.ModelAdmin):
     ]
     exclude = ("days", "teachers")
     list_display = ("date", "capacity", "kindergarten", "childern_planned",
-                    "childern_present", "teachers_planned", "teachers_present")
+                    "childern_present")
     list_filter = ("kindergarten",)
 
     def childern_planned(self, day):

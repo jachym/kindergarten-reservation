@@ -16,6 +16,7 @@
 {% if parent %}
 <h3>Moje děti</h3>
 <form method="post" action="{% url 'day-save' day.date.year day.date.month day.date.day  %} ">
+{% csrf_token %}
 <div class="table-responsive">
 <table class="table">
     <tr><th>Děcko</th><th>Rezervováno</th><th>Přítomno</th></tr>
@@ -23,8 +24,16 @@
     <tr>
         <td><a href="{% url 'child' child.uuid %}">{{ child.first_name }} {{ child.middle_name }} {{ child.last_name }}</a></td>
         <td>
-            {% if not past %}
-            <input class="form-check-input" type="checkbox" name="planned" {% if child.pk in parent.childern_planned %} checked="checked"{% endif %} />
+            {% if not past and day.capacity > day.child_day_planned.count %}
+            <input class="form-check-input" type="checkbox"  name="child-{{ child.pk }}-planned" {% if child.pk in parent.childern_planned %} checked="checked"{% endif %} />
+                {% if not child.pk in parent.childern_planned %} 
+                        Náhrada za absenci:
+                        <select class="form-control" name="child-{{ child.pk }}-compensation">
+                                {% for d in child.compensation %} 
+                                <option value="{{ d.date.year }}-{{ d.date.month }}-{{ d.date.day }}">{{ d.date.year }}-{{ d.date.month }}-{{ d.date.day }}</option>
+                                {% endfor %}
+                        </select>
+                {% endif %}
             {% else %}
                 {% if child.pk in parent.childern_planned %} ANO {% else %} NE {% endif %}
             {% endif %}
@@ -51,13 +60,15 @@
         <td>
             {% if teacher.teacher.is_admin and day.capacity > day.child_day_planned.count %}
             <input class="form-check-input" type="checkbox" name="child-{{ child.pk }}-planned" {% if child.pk in teacher.childern_planned %}checked="checked"{% endif %}></input>
-            Náhrada za absenci:
-            <select class="form-control" name="child-{{ child.pk }}-compensation">
-                <option value="">---------</option>
-                {% for d in child.compensation %} 
-                <option value="{{ d.date.year }}-{{ d.date.month }}-{{ d.date.day }}">{{ d.date.year }}-{{ d.date.month }}-{{ d.date.day }}</option>
-                {% endfor %}
-            </select>
+                {% if not child.pk in teacher.childern_planned %} 
+                        Náhrada za absenci:
+                        <select class="form-control" name="child-{{ child.pk }}-compensation">
+                                <option value="">---------</option>
+                                {% for d in child.compensation %} 
+                                <option value="{{ d.date.year }}-{{ d.date.month }}-{{ d.date.day }}">{{ d.date.year }}-{{ d.date.month }}-{{ d.date.day }}</option>
+                                {% endfor %}
+                        </select>
+                {% endif %}
             {% else %}
                 {% if child.pk in teacher.childern_planned %} ANO {% else %} NE {% endif %}
             {% endif %}

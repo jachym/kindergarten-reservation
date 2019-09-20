@@ -26,21 +26,21 @@
     {% endif %}
     <div class="collapse navbar-collapse" id="navbarResponsive">
       <ul class="navbar-nav ml-auto">
-        {% if parent or teacher %}
+        {% if user.type == "parent" or user.type == "teacher" %}
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'calendar' %}">Kalendář</a>
             </li>
             <li class="nav-item">
 
-            {% if parent %}
+            {% if user.type == "parent" %}
                 <a class="nav-link" href="{% url 'parent' %}">Moje stránka</a>
-            {% elif teacher %}
+            {% elif user.type == "teacher" %}
                 <a class="nav-link" href="{% url 'teacher' %}">Moje stránka</a>
             {% endif %}
 
             </li>
             <li class="nav-item">
-                <span class="navbar-text">{{ user.first_name }} {{ user.last_name }}</span>
+                <span class="navbar-text">{{ user.user.first_name }} {{ user.user.last_name }}</span>
             </li>
             <li class="nav-item">
                 <span class="navbar-text">|</span>

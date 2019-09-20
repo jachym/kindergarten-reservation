@@ -54,6 +54,15 @@ class MonthView(LoginRequiredMixin, UserPassesTestMixin, generic.ListView):
 
         return response
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            teacher = Teacher.objects.get(user=self.request.user)
+            context['user'] = teacher
+        except Exception as e:
+            parent = Parent.objects.get(user=self.request.user)
+            context['user'] = parent
+
     def get_queryset(self):
         teacher = Teacher.objects.get(user=self.request.user)
         kindergarten = teacher.kindergarten
@@ -76,6 +85,12 @@ class ParentView(LoginRequiredMixin, generic.DetailView):
         # Add in a QuerySet of all the books
         context['childern'] = Child.objects.filter(parent=self.object)
         context["kindergarten"] = self.object.kindergarten
+        try:
+            teacher = Teacher.objects.get(user=self.request.user)
+            context['user'] = teacher
+        except Exception as e:
+            parent = Parent.objects.get(user=self.request.user)
+            context['user'] = parent
         return context
 
     def get_object(self, **kwargs):
@@ -97,6 +112,14 @@ class TeacherView(LoginRequiredMixin, generic.DetailView):
         context = super().get_context_data(**kwargs)
         # Add in a QuerySet of all the books
         context['kindergarten'] = self.object.kindergarten
+
+        try:
+            teacher = Teacher.objects.get(user=self.request.user)
+            context['user'] = teacher
+        except Exception as e:
+            parent = Parent.objects.get(user=self.request.user)
+            context['user'] = parent
+
         return context
 
     def get_object(self, **kwargs):
@@ -136,6 +159,16 @@ class KindergartenView(generic.DetailView):
                 context['teachers'] = Teacher.objects.filter(kindergarten=parent.kindergarten)
             else:
                 pass
+
+        teachers = Teacher.objects.filter(user=self.request.user)
+        parents = Parent.objects.filter(user=self.request.user)
+        if teachers.count():
+            context['user_type'] = teachers[0]
+        elif parents.count():
+            context['user_type'] = parent
+        else:
+            context["user_type"] = None
+
         return context
 
 def _get_day_index(day_name):
@@ -153,6 +186,17 @@ class DayOfWeekView(LoginRequiredMixin, APIView):
         day = self.get_object(year, month, day)
         serializer = DaySerializer(day, many=False)
         return Response(serializer.data)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+
+        try:
+            teacher = Teacher.objects.get(user=self.request.user)
+            context['user'] = teacher
+        except Exception as e:
+            parent = Parent.objects.get(user=self.request.user)
+            context['user'] = parent
 
     def get_object(self, year, month, day_name):
         #day_name = self.kwargs["day"].lower()
@@ -174,6 +218,7 @@ class DayView(LoginRequiredMixin, generic.DetailView):
     def get_object(self, **kwargs):
 
         user = self.request.user
+            
         try:
             teacher = Teacher.objects.get(user=user)
             self.kg = teacher.kindergarten
@@ -205,6 +250,13 @@ class DayView(LoginRequiredMixin, generic.DetailView):
 
         # Add in a QuerySet of all the books
         #context['childern'] = Child.objects.filter()
+        try:
+            teacher = Teacher.objects.get(user=self.request.user)
+            context['user'] = teacher
+        except Exception as e:
+            parent = Parent.objects.get(user=self.request.user)
+            context['user'] = parent
+
         return context
 
     def get_parent_context(self, parent):
@@ -247,11 +299,32 @@ class ChildView(generic.DetailView):
         context["parent"] = self.object.parent
         # Add in a QuerySet of all the books
         #context['childern'] = Child.objects.filter()
+        try:
+            teacher = Teacher.objects.get(user=self.request.user)
+            context['user'] = teacher
+        except Exception as e:
+            parent = Parent.objects.get(user=self.request.user)
+            context['user'] = parent
         return context
 
 class KindergartensView(generic.ListView):
     model = Kindergarten
     template_name = 'kindergarden/kindergartens.html'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+
+        if not self.request.user.is_anonymous:
+            teachers = Teacher.objects.filter(user=self.request.user)
+            parents = Parent.objects.filter(user=self.request.user)
+            if teachers.count():
+                context['user'] = teachers[0]
+            elif parents.count():
+                context['user'] = parents[0]
+            else:
+                context["user"] = None
+        return context
 
 
 # ==================================================================
@@ -266,26 +339,6 @@ def get_teacher(request):
     user = request.user
     
     return get_object_or_404(Teacher, user=request.user)
-
-@login_required
-def profile(request):
-    user = request.user
-    
-    try:
-        teacher = Teacher.objects.get(user=user)
-        return _teacher_profile(teacher, request)
-    except ObjectDoesNotExist as exp:
-        parent = Parent.objects.get(user=user)
-        return _teacher_profile(parent, request)
-
-
-def _teacher_profile(teacher, request):
-        return HttpResponse('hello teacher')
-
-
-def _parent_profile(teacher, request):
-        return HttpResponse('hello parent')
-
 
 @method_decorator(login_required, name='dispatch')
 class CalendarView(generic.ListView):
@@ -382,41 +435,54 @@ class CalendarView(generic.ListView):
 
 
 def is_admin_teacher(user):
-    Teacher.objects.get(user=user)
-    return Teacher.is_admin
+    try:
+        Teacher.objects.get(user=user)
+        return Teacher.is_admin
+    except ObjectDoesNotExist as e:
+        return False
 
 
-@user_passes_test(is_admin_teacher)
+#@user_passes_test(can_save_day)
 @login_required(login_url="login")
 def save_day(request, year, month, day):
     day = Day.objects.get(date=datetime.date(year, month, day))
     form = request.POST
-    kindergarten = Teacher.objects.get(user=request.user).kindergarten
+
+    teachers = Teacher.objects.filter(user=request.user)
+    parents = Parent.objects.filter(user=request.user)
+
+    if teachers.count():
+        kindergarten = teachers[0].kindergarten
+    elif parents.count():
+        kindergarten = parents[0].kindergarten
     for child in kindergarten.childern:
 
-        if "child-{}-present".format(child.pk) in form:
-            if not day in child.present.all():
-                child.present.add(day)
-        else:
-            if day in child.present.all():
-                child.present.remove(day)
+        if teachers.count() and teachers[0].is_admin or \
+            parents.count() and child.parent == parents[0]:
 
-        if "child-{}-planned".format(child.pk) in form:
-            if not day in child.days.all():
-                if day.capacity > day.child_day_planned.count():
-                    child.days.add(day)
-                else:
-                    from .utils import CapacityFilled
-                    raise CapacityFilled(day, child)
+            if "child-{}-present".format(child.pk) in form:
+                if not day in child.present.all():
+                    child.present.add(day)
+            else:
+                if day in child.present.all():
+                    child.present.remove(day)
 
-            c_key = "child-{}-compensation".format(child.pk)
-            if c_key in form and form[c_key] is not "":
-                c_year, c_month, c_day = map(lambda x: int(x), form[c_key].split("-"))
-                compensate_date = datetime.date(c_year, c_month, c_day)
-                child.days.remove(Day.objects.get(date=compensate_date, kindergarten=kindergarten))
-        else:
-            if day in child.days.all():
-                child.days.remove(day)
+            if "child-{}-planned".format(child.pk) in form:
+                if not day in child.days.all():
+                    if day.capacity > day.child_day_planned.count():
+                        child.days.add(day)
+                    else:
+                        from .utils import CapacityFilled
+                        raise CapacityFilled(day, child)
+
+                c_key = "child-{}-compensation".format(child.pk)
+                if c_key in form and form[c_key] is not "":
+                    c_year, c_month, c_day = map(lambda x: int(x), form[c_key].split("-"))
+                    compensate_date = datetime.date(c_year, c_month, c_day)
+                    child.days.remove(Day.objects.get(date=compensate_date, kindergarten=kindergarten))
+            else:
+                if day in child.days.all():
+                    child.days.remove(day)
 
     url = reverse("day", args=[day.date.year, day.date.month, day.date.day])
     return HttpResponseRedirect(url)

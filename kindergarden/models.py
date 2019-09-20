@@ -92,6 +92,10 @@ class Teacher(models.Model):
         else:
             return self.user.username
 
+    @property
+    def type(self):
+        return "teacher"
+
     def save(self, *args, **kwargs):
 
         label = Teacher._meta.app_label
@@ -111,11 +115,16 @@ class Parent(models.Model):
                                     on_delete=models.CASCADE)
     phone = models.CharField( max_length=20,)
 
+
     def __str__(self):
         if self.user.first_name:
             return "{} {}".format(self.user.first_name, self.user.last_name)
         else:
             return self.user.username
+
+    @property
+    def type(self):
+        return "parent"
 
 class Child(models.Model):
 
@@ -260,12 +269,12 @@ class Day(models.Model):
 
     def save(self, *args, **kwargs):
 
-        if not self.capacity:
+        if self.capacity is None:
             self.capacity = self.kindergarten.default_capacity
 
-        if len(Day.objects.all().filter(date=self.date,
-                                  kindergarten=self.kindergarten)) >  0:
-            raise Exception("Date already exists")
+        #if len(Day.objects.all().filter(date=self.date,
+        #                          kindergarten=self.kindergarten)) >  0:
+        #    raise Exception("Date already exists")
 
 
         super().save(*args, **kwargs)
