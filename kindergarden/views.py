@@ -385,10 +385,12 @@ class CalendarView(generic.ListView):
             kg = teacher.kindergarten
             context["teacher"] = teacher
             context["kindergarten"] = teacher.kindergarten
+            context["user"] = teacher
         except ObjectDoesNotExist as exp:
             parent = Parent.objects.get(user=user)
             kg = parent.kindergarten
             context["parent"] = parent
+            context["user"] = parent
             ch_reserved = {ch: [d for d in ch.days.filter(**month_filter)] for ch in parent.child_set.all()}
             ch_present = {ch: [d for d in ch.present.filter(**month_filter)] for ch in parent.child_set.all()}
             context["kindergarten"] = parent.kindergarten
