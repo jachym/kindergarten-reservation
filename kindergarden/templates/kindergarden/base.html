@@ -16,57 +16,44 @@
 </head>
 <body>
     <!-- Navigation -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light shadow fixed-top">
-  <div class="container">
-      {% if kindergarten %}
-      <a class="navbar-brand" href="{% url 'kindergarden' kindergarten.uri_name %}">{{ kindergarten.name }}</a>
-     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+
+
+    <header>
+      <nav class="navbar navbar-expand-md navbar-light fixed-top bg-light">
+        {% if kindergarten %}
+        <a class="navbar-brand" href="{% url 'kindergarden' kindergarten.uri_name %}">{{ kindergarten.name }}</a>
+        {% endif %}
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-    {% endif %}
-    <div class="collapse navbar-collapse" id="navbarResponsive">
-      <ul class="navbar-nav ml-auto">
-        {% if user.type == "parent" or user.type == "teacher" %}
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'calendar' %}">Kalendář</a>
-            </li>
-            <li class="nav-item">
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav mr-auto">
+                {% if user.type == "parent" or user.type == "teacher" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'calendar' %}">Kalendář</a>
+                    </li>
+                    <li class="nav-item">
 
-            {% if user.type == "parent" %}
-                <a class="nav-link" href="{% url 'parent' %}">Moje stránka</a>
-            {% elif user.type == "teacher" %}
-                <a class="nav-link" href="{% url 'teacher' %}">Moje stránka</a>
-            {% endif %}
+                    {% if user.type == "parent" %}
+                        <a class="nav-link" href="{% url 'parent' %}">Moje stránka</a>
+                    {% elif user.type == "teacher" %}
+                        <a class="nav-link" href="{% url 'teacher' %}">Moje stránka</a>
+                    {% endif %}
 
-            </li>
-            <li class="nav-item">
-                <span class="navbar-text">{{ user.user.first_name }} {{ user.user.last_name }}</span>
-            </li>
-            <li class="nav-item">
-                <span class="navbar-text">|</span>
-            </li>
-            <li class="nav-item">
-                    <a class="nav-link" href="{% url 'logout' %}">Odhlásit</a>
-            </li>
-        {% else %}
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'login' %}">Přihlásit</a>
-            </li>
-        {% endif %}
-      </ul>
-    </div>
-  </div>
-</nav>
-
-<!-- Full Page Image Header with Vertically Centered Content -->
-<header class="masthead">
-  <div class="container h-100">
-    <div class="row h-100 align-items-center">
-      <div class="col-12 text-center">
-      </div>
-    </div>
-  </div>
-</header>
+                    </li>
+                    <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}">Odhlásit</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Přihlásit</a>
+                    </li>
+                {% endif %}
+            </ul>
+            <div>{{ user.user.first_name }} {{ user.user.last_name }}</div>
+        </div>
+      </nav>
+    </header>
 
 <!-- Page Content -->
 <section class="py-5">
