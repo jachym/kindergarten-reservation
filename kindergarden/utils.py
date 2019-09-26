@@ -8,7 +8,7 @@ from .models import Child
 from .models import Parent
 
 class CapacityFilled(Exception):
-    def __init__(self, day, child):
+    def __init__(self, child, day):
         self.day = day
         self.child = child
         super(CapacityFilled, self).__init__("Capacity of {} for day {} filled with child {}".format(day.capacity, day.date, child))

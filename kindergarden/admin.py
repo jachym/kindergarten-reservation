@@ -49,12 +49,10 @@ class TeacherAdmin(admin.ModelAdmin):
     def email(self, teacher):
         return teacher.user.email
 
-    def child(self, teacher):
-        return "ahoj"
 
 class ParentAdmin(admin.ModelAdmin):
     list_display = (
-        "name", "kindergarten", "email", "phone", "child")
+        "name", "kindergarten", "email", "phone", "childs")
     list_filter = ("kindergarten", )
 
     def name(self, parent):
@@ -63,8 +61,8 @@ class ParentAdmin(admin.ModelAdmin):
     def email(self, parent):
         return parent.user.email
 
-    def child(self, parent):
-        return "ahoj"
+    def childs(self, parent):
+        return " <br /> ".join([ch.name for ch in Child.objects.filter(parent=parent)])
 
 class ChildAdmin(admin.ModelAdmin):
     list_filter = (ChildKindergartenListFilter, )
