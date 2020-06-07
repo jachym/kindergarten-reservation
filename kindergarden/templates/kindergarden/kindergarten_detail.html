@@ -33,8 +33,8 @@
 {% if childern %}
 <h3>Dítka</h3>
 <div class="table-responsive">
-<table class="table">
-    <thead><tr><th>Jméno</th><th>Rodič</th><th>Absence (poslední 3 měsíce)</th><th>Poznámka</th></tr></thead>
+<table class="table table-striped">
+    <thead><tr><th>Jméno</th><th>Rodič</th><th>Absence<div class="d-none d-sm-block">(poslední 3 měsíce)</div></th><th>Poznámka</th></tr></thead>
     <tbody>
     {% for child in childern %}
     <tr>

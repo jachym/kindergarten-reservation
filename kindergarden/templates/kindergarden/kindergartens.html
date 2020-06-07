@@ -6,7 +6,7 @@
 <h3>Seznam školek</h3>
 
 <div class="table-responsive">
-    <table class="table">
+    <table class="table table-striped">
 {% for kg in object_list %}
 <tr>
     <th><a href="{% url 'kindergarden' kg.uri_name %}">{{ kg.name }}</a></th>

@@ -30,41 +30,56 @@ class Calendar(HTMLCalendar):
         if len(this_day):
             day = this_day[0]
             if teacher:
-                d += f'<tr><th>Kapacita:</th><td>{day.capacity}</td></tr>'
                 ch_planned = len(day.child_day_planned.all())
-                d += f'<tr><th>Přihlášených:</th><td>{ch_planned}</td></tr>'
+                d += f'{ch_planned}/{day.capacity}'
                 if day.date < today:
                     ch_present = len(day.child_day_present.all())
-                    d += f'<tr><th>Přítomných:</th><td>{ch_present}</td></tr>'
+                    d += f'<br /><strong>{ch_present}</strong>'
 
             if day.date >= today:
                 for child in childern_reserved:
                     child_url = reverse("child", args=[child.uuid])
                     if day in childern_reserved[child]:
-                        d += f"<tr><td class=\"child-reserved\"><a href=\"{child_url}\" title=\"rezervováno\">{child}</a></td></tr>"
+                        d += f"<a role=\"button\" class=\"btn btn-primary btn-sm \" href=\"{child_url}\" title=\"rezervováno\">{child}</a>"
+                    else:
+                        d += "&nbsp;"
             else:
                 for child in childern_present:
                     child_url = reverse("child", args=[child.uuid])
                     if day in childern_present[child]:
-                        d += f"<tr><td class=\"child-present\"><a href=\"{child_url}\" title=\"přítomno\">{child}</a></td></tr>"
+                        d += f"<a role=\"button\" class=\"btn btn-success btn-sm \" href=\"{child_url}\" title=\"přítomno\">{child}</a>"
                     elif day in childern_reserved[child]:
-                        d += f"<tr><td class=\"child-absent\"><a href=\"{child_url}\" title=\"chybělo\">{child}</a></td></tr>"
+                        d += f"<a role=\"button\" class=\"btn btn-danger btn-sm \" href=\"{child_url}\" title=\"chybělo\">{child}</a>"
+                    else:
+                        d += "<div>&nbsp;</div>"
 
             url = reverse("day", args=[self.year, self.month, day.date.day])
-            d = f'<table class="table"><thead class="thead-light"><tr><th colspan="2"><a style="width:100%" href=\"{url}\"><span style="width:100%">{md}</span></a></th></thead><tbody>{d}</tbody></table>'
+
+            d = f'''
+              <div class="card">
+                <div class="card-header"><a style="width:100%" href=\"{url}\">{md}</a></div>
+                <div class="card-body">{d}</div>
+              </div>
+            '''
+
             if day.date == today:
-                return f"<td class=\"calendar-day today\">{d}</td>"
+                return f"<td class=\"calendar-day today text-center\">{d}</td>"
             else:
-                return f"<td class=\"calendar-day\">{d}</td>"
+                return f"<td class=\"calendar-day text-center\">{d}</td>"
 
         elif md != 0:
-            d = f'<table class="table"><thead class="thead-light"><tr><th colspan="2">{md}</th></thead><tbody>{d}</tbody></table>'
+            d = f'''
+              <div class="card">
+                <div class="card-header">{md}</div>
+                <div class="card-body">{d}</div>
+              </div>
+            '''
             if day == today:
-                return f"<td class=\"calendar-day today\">{d}</td>"
+                return f"<td class=\"calendar-day today text-center\">{d}</td>"
             else:
-                return f"<td class=\"calendar-day\">{d}</td>"
+                return f"<td class=\"calendar-day text-center\">{d}</td>"
         else:
-            return '<td></td>'
+            return '<td>&nbsp;</td>'
 
     # formats a week as a tr 
     def formatweek(self, teacher, theweek, days, childern_present, childern_reserved):
@@ -79,7 +94,7 @@ class Calendar(HTMLCalendar):
 
         #days = Day.objects.filter(date__year=self.year, date__month=self.month)
 
-        cal = f'<div class="table-responsive"><table border="0" cellpadding="0" cellspacing="0" class="table">\n'
+        cal = f'<div class="table-responsive"><table border="0" cellpadding="0" cellspacing="0" class="table table-sm">\n'
         cal += f'{self.formatmonthname(self.year, self.month, withyear=withyear)}\n'
         cal += f'{self.formatweekheader()}\n'
         for week in self.monthdays2calendar(self.year, self.month):

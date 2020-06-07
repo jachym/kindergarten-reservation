@@ -485,7 +485,8 @@ def save_day(request, year, month, day):
                     child.days.remove(Day.objects.get(date=compensate_date, kindergarten=kindergarten))
             else:
                 if day in child.days.all():
-                    child.days.remove(day)
+                    #child.days.remove(day)
+                    child.absent.add(day)
 
     url = reverse("day", args=[day.date.year, day.date.month, day.date.day])
     return HttpResponseRedirect(url)

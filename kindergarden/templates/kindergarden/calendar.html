@@ -25,10 +25,10 @@
 </div>
 
 {% if parent %}
-<table class="table">
-<tr>
+<table class="table table-bordered">
+    <thead class="thead-light"><tr>
     <th>Jméno dítka</th><th>absence za poslední {{ child.kindergarden.compensation_length }} měsíce</th></tr>
-</tr>
+    </tr></thead>
 {% for child in parent.child_set.all %}
 <tr>
     <th><a href="/child/{{ child.uuid }}">{{ child.name }}</a></th><th>{{ child.compensation | length }}</th>
