@@ -12,7 +12,8 @@ import calendar
 from django.shortcuts import get_object_or_404
 from django.views import generic
 from django.utils.safestring import mark_safe
-from django.contrib.auth import authenticate, login 
+from django.contrib.auth import authenticate, login
+from django.shortcuts import redirect
 
 from .models import Day, Teacher, Kindergarten, Parent, Child
 from .utils import Calendar
@@ -266,9 +267,11 @@ class DayView(LoginRequiredMixin, generic.DetailView):
         childern_planned = Child.objects.filter(parent=parent, days__in=[day])
         childern_present = Child.objects.filter(parent=parent, present__in=[day])
         childern_all = Child.objects.filter(parent=parent)
+        childern_absent = Child.objects.filter(parent=parent, absent_all__in=[day])
         context["parent"] = parent
         context["childern_planned"] = [ch.pk for ch in childern_planned]
         context["childern_present"] = [ch.pk for ch in childern_present]
+        context["childern_absent"] = [ch.pk for ch in childern_absent]
         context["childern_all"] = childern_all
         return context
 
@@ -277,10 +280,12 @@ class DayView(LoginRequiredMixin, generic.DetailView):
         day = self.object
         childern_planned = Child.objects.filter(parent__kindergarten=teacher.kindergarten, days__in=[day])
         childern_present = Child.objects.filter(parent__kindergarten=teacher.kindergarten, present__in=[day])
+        childern_absent = Child.objects.filter(parent__kindergarten=teacher.kindergarten, absent_all__in=[day])
         childern_all = Child.objects.filter(parent__kindergarten=teacher.kindergarten)
         context["teacher"] = teacher
         context["childern_planned"] = [ch.pk for ch in childern_planned]
         context["childern_present"] = [ch.pk for ch in childern_present]
+        context["childern_absent"] = [ch.pk for ch in childern_absent]
         context["childern_all"] = childern_all
         return context
 
@@ -345,6 +350,16 @@ def get_teacher(request):
 class CalendarView(generic.ListView):
     model = Day
     template_name = 'kindergarden/calendar.html'
+
+    def get(self, request, *args, **kwargs):
+        if "/calendar/" == request.path:
+            today = datetime.date.today()
+            year = today.year
+            month = today.month
+            return HttpResponseRedirect(reverse('month', args=(year,month)))
+
+        return super().get(request, *args, **kwargs)
+
 
     def post(self, request, *args, **kwargs):
         self.teacher = get_teacher(self.request)
@@ -469,6 +484,7 @@ def save_day(request, year, month, day):
             else:
                 if day in child.present.all():
                     child.present.remove(day)
+                    child.absent_all.add(day)
 
             if "child-{}-planned".format(child.pk) in form:
                 if not day in child.days.all():
@@ -479,14 +495,14 @@ def save_day(request, year, month, day):
                         raise CapacityFilled(day, child)
 
                 c_key = "child-{}-compensation".format(child.pk)
-                if c_key in form and form[c_key] is not "":
+                if c_key in form and form[c_key] != "":
                     c_year, c_month, c_day = map(lambda x: int(x), form[c_key].split("-"))
                     compensate_date = datetime.date(c_year, c_month, c_day)
-                    child.days.remove(Day.objects.get(date=compensate_date, kindergarten=kindergarten))
+                    child.absent_all.remove(Day.objects.get(date=compensate_date, kindergarten=kindergarten))
             else:
                 if day in child.days.all():
                     #child.days.remove(day)
-                    child.absent.add(day)
+                    child.absent_all.add(day)
 
     url = reverse("day", args=[day.date.year, day.date.month, day.date.day])
     return HttpResponseRedirect(url)

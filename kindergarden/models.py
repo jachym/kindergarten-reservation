@@ -159,16 +159,12 @@ class Child(models.Model):
 
     days = models.ManyToManyField("Day", blank=True, related_name="child_day_planned")
     present = models.ManyToManyField("Day", blank=True, related_name="child_day_present")
+    absent_all = models.ManyToManyField("Day", blank=True, related_name="child_day_absent")
 
     @property
     def kindergarten(self):
         return self.parent.kindergarten
 
-    #@property
-    #def absent(self):
-
-    #    absent = self.days.all().exclude(date__in=[d.date for d in self.present.all()])
-    #    return absent
 
     def present_list(self, year, month):
 
@@ -191,7 +187,7 @@ class Child(models.Model):
 
         return mylist
 
-                
+
 
     @property
     def absent(self):
@@ -202,6 +198,9 @@ class Child(models.Model):
             year = year - 1
 
         start = mydate(year=year, month=9, day=1)
+        return self.absent_all.filter(date__gte=start).exclude(
+            date__in=[d.date for d in self.present.all()]
+        )
 
         return self.days.filter(date__gte=start,
                 date__lt=today).exclude(

@@ -32,6 +32,11 @@ class ChildPresentInline(admin.TabularInline):
     extra = 0
     verbose_name = _("Present day")
 
+class ChildAbsentInline(admin.TabularInline):
+    model = Child.absent_all.through
+    extra = 0
+    verbose_name = _("Absent day")
+
 class KindergartenAdmin(admin.ModelAdmin):
     list_display = (
         "name", "phone", "email", "web")
@@ -69,7 +74,7 @@ class ChildAdmin(admin.ModelAdmin):
     list_display = ("name", "kindergarten", "parent")
 
     inlines = [
-            ChildDaysInline, ChildPresentInline
+            ChildDaysInline, ChildPresentInline, ChildAbsentInline
     ]
     exclude = ("days", "present")
 
