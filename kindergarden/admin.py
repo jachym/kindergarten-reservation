@@ -4,8 +4,6 @@ from django.urls import resolve
 
 from .models import Kindergarten, Teacher, Parent, Day, Child, TeachersDay
 from .forms import ChildAdminForm
-import datetime
-from calendar import monthrange
 
 class ChildKindergartenListFilter(admin.SimpleListFilter):
     title = _('Kindergarten')
@@ -63,37 +61,6 @@ class TeacherAdmin(admin.ModelAdmin):
 
     def email(self, teacher):
         return teacher.user.email
-
-    def this_month(self, teacher):
-
-        today = datetime.date.today()
-        year = today.year
-        month = today.month
-        min_date = datetime.date(year, month, 1)
-        max_date = datetime.date(year, month, monthrange(year, month)[1])
-
-        days = TeachersDay.objects.filter(date__gte=min_date, date__lte=max_date,
-                teacher=teacher)
-
-        return sum([d.duration.total_seconds()/3600 for d in days])
-
-    def last_month(self, teacher):
-
-        today = datetime.date.today()
-        year = today.year
-        month = today.month
-
-        month = month - 1
-        if month < 1:
-            month = 12
-            year = year -1
-        min_date = datetime.date(year, month, 1)
-        max_date = datetime.date(year, month, monthrange(year, month)[1])
-
-        days = TeachersDay.objects.filter(date__gte=min_date, date__lte=max_date,
-                teacher=teacher)
-
-        return sum([d.duration.total_seconds()/3600 for d in days])
 
 
 class ParentAdmin(admin.ModelAdmin):

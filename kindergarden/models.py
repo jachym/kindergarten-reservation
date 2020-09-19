@@ -8,6 +8,8 @@ from django.db.models import Subquery
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 import uuid
+import datetime
+from calendar import monthrange
 
 
 # Create your models here.
@@ -138,6 +140,39 @@ class Teacher(models.Model):
 
     def __str__(self):
         return "{} {}".format(self.user.first_name, self.user.last_name)
+
+    @property
+    def this_month(self):
+
+        today = datetime.date.today()
+        year = today.year
+        month = today.month
+        min_date = datetime.date(year, month, 1)
+        max_date = datetime.date(year, month, monthrange(year, month)[1])
+
+        days = TeachersDay.objects.filter(date__gte=min_date, date__lte=max_date,
+                teacher=self)
+
+        return sum([d.duration.total_seconds()/3600 for d in days])
+
+    @property
+    def last_month(self):
+
+        today = datetime.date.today()
+        year = today.year
+        month = today.month
+
+        month = month - 1
+        if month < 1:
+            month = 12
+            year = year -1
+        min_date = datetime.date(year, month, 1)
+        max_date = datetime.date(year, month, monthrange(year, month)[1])
+
+        days = TeachersDay.objects.filter(date__gte=min_date, date__lte=max_date,
+                teacher=self)
+
+        return sum([d.duration.total_seconds()/3600 for d in days])
 
 class Parent(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
