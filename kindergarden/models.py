@@ -85,6 +85,19 @@ class Teacher(models.Model):
     #present = models.ManyToManyField("Day", blank=True, related_name="teacher_day_present")
     is_admin = models.BooleanField(blank=True, default=False)
 
+    monday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"monday-check\"></div>")
+    tuesday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"tuesday-check\"></div>")
+    wednesday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"wednesday-check\"></div>")
+    thursday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"thursday-check\"></div>")
+    friday = models.BooleanField(blank=False, default=False,
+            help_text="<div id=\"friday-check\"></div>")
+
+    days_planned = models.ManyToManyField("Day", blank=True, related_name="teacher_day_planned")
+
     @property
     def name(self):
         if self.user.first_name:
@@ -97,12 +110,29 @@ class Teacher(models.Model):
         return "teacher"
 
     def save(self, *args, **kwargs):
+        from .utils import plan_month # this is here due to circular import
 
         label = Teacher._meta.app_label
         group_name = '{}_{}'.format(label, self.kindergarten.uri_name)
 
         group = Group.objects.get(name=group_name)
         group.user_set.add(self.user)
+
+
+        super().save(*args, **kwargs)
+
+        # plan this month and next month automatically
+        today = datetime.today()
+        plan_month(self.kindergarten, today.year, today.month)
+
+        if today.month == 12:
+            month = 1
+            year = today.year + 1
+        else:
+            month = today.month + 1
+            year = today.year
+
+        plan_month(self.kindergarten, year, month)
 
         super().save(*args, **kwargs)
 
@@ -232,7 +262,7 @@ class Child(models.Model):
         return days_compensate
 
     def save(self, *args, **kwargs):
-        from .utils import plan_month
+        from .utils import plan_month # this is here due to circular import
 
         super().save(*args, **kwargs)
 
@@ -266,6 +296,8 @@ class Day(models.Model):
     kindergarten = models.ForeignKey(
         "Kindergarten", on_delete=models.CASCADE)
 
+    teachers = models.ManyToManyField(Teacher)
+
     def save(self, *args, **kwargs):
 
         if self.capacity is None:
@@ -280,4 +312,20 @@ class Day(models.Model):
 
     def __str__(self):
         return str(self.date)
+
+class TeachersDay(models.Model):
+    date = models.DateField()
+    duration = models.DurationField()
+    note = models.TextField(blank=True)
+    teacher = models.ForeignKey("Teacher", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.date)
+
+    @property
+    def time(self):
+        hours = int(self.duration.total_seconds()/3600)
+        minutes = (self.duration.total_seconds()%3600)/60
+        return "{h:02d}:{m:02d}:00".format(h=hours, m=int(minutes))
+
 

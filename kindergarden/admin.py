@@ -46,7 +46,15 @@ class TeacherAdmin(admin.ModelAdmin):
         "name", "kindergarten", "email", "phone")
 
     list_filer = ("kindergarten")
-    exclude = ("days", "present")
+    exclude = ("days_planned", "days_present")
+
+    fieldsets = (
+            (None, {"fields": ("user", "kindergarten", "is_admin")}),
+            ("Contact", {"fields": ("phone",)}),
+            ("Planning", {"fields": ("monday", "tuesday", "wednesday",
+            "thursday", "friday")}),
+
+    )
 
     def name(self, teacher):
         return teacher.name

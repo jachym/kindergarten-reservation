@@ -20,7 +20,7 @@
     <tbody>
     {% for teacher in teachers %}
     <tr>
-        <td><a href="{% url 'teacher' teacher.pk %}">{{ teacher.name }}</a></td>
+        <td><a href="{% url 'teacher_by_id' teacher.pk %}">{{ teacher.name }}</a></td>
         <td>{{ teacher.email }}</td>
         <td>{{ teacher.phone }}</td>
     </tr>

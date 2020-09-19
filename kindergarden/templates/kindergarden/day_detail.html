@@ -13,6 +13,19 @@
 </table>
 </div>
 
+<h3>Učitelé pro tento den</h3>
+<table class="table table-bordered table-sm">
+    <thead>
+    <tr><th>Učitel</th><th>Telefon</th></tr>
+    </thead>
+{% for teacher in parent.teachers_for_the_day %}
+<tr>
+    <td><a href="{% url 'teacher_by_id' teacher.pk %}">{{ teacher.user.first_name }} {{ teacher.user.last_name }}</a></td>
+    <td> {{ teacher.phone }} </td>
+</tr>
+{% endfor %}
+</table>
+
 {% if parent %}
 <h3>Moje děti</h3>
 <form method="post" action="{% url 'day-save' day.date.year day.date.month day.date.day  %} ">
@@ -52,24 +65,47 @@
 </form>
 {% endif %}
 
-{% if teacher %}
-<h3>Seznam dětí</h3>
+{% if teacher_view %}
+
 <form method="post" action="{% url 'day-save' day.date.year day.date.month day.date.day  %} ">
 {% csrf_token %}
 
+<h3>Učitelé na tento den</h3>
 <input class="btn btn-primary" type="submit" value="Uložit"></input>
+<table class="table table-bordered table-sm">
+    <thead>
+    <tr><th>Učitel</th><th>Hodiny</th></tr>
+    </thead>
+    <tbody>
+    {% for teacher in teacher_view.teachers_for_the_day %}
+    <tr>
+        <td><a href="{% url 'teacher_by_id' teacher.pk %}">{{ teacher.user.first_name }} {{ teacher.user.last_name }}</a></td>
+        <td class="text-center">
+            {% if teacher_view.teacher.is_admin %}
+            <input class="custom-input" type="time" name="teacher-{{ teacher.pk }}-present" min="1:00" max="12:00" {% if teacher.today.time %}value="{{ teacher.today.time }}"{% endif %}></input>
+            {% else %}
+                {{ teacher.time }}
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+<h3>Docházka dětí</h3>
 <table class="table table-bordered table-sm">
     <thead>
     <tr><th>Děcko</th><th>Rez.</th><th>Doch.</th></tr>
     </thead>
     <tbody>
-    {% for child in teacher.childern_all %}
+    {% for child in teacher_view.childern_all %}
     <tr>
         <td><a href="{% url 'child' child.uuid %}">{{ child.first_name }} {{ child.middle_name }} {{ child.last_name }}</a></td>
         <td class="text-center">
-            {% if teacher.teacher.is_admin and day.capacity > day.child_day_planned.count %}
-            <input class="custom-input" type="checkbox" name="child-{{ child.pk }}-planned" {% if child.pk in teacher.childern_planned %}checked="checked"{% endif %}></input>
-                {% if not child.pk in teacher.childern_planned %} 
+            {% if teacher_view.teacher.is_admin and day.capacity > day.child_day_planned.count %}
+            <input class="custom-input" type="checkbox" name="child-{{ child.pk }}-planned" {% if child.pk in teacher_view.childern_planned %}checked="checked"{% endif %}></input>
+                {% if not child.pk in teacher_view.childern_planned %} 
                         <select class="col-lg-3 custom-select form-control-sm form-control" name="child-{{ child.pk }}-compensation">
                                 <option value="">Náhrada</option>
                                 {% for d in child.compensation %} 
@@ -78,15 +114,15 @@
                         </select>
                 {% endif %}
             {% else %}
-                {% if child.pk in teacher.childern_planned %} ANO {% else %} NE {% endif %}
+                {% if child.pk in teacher_view.childern_planned %} ANO {% else %} NE {% endif %}
             {% endif %}
         </td>
         <td class="text-center">
-            {% if teacher.teacher.is_admin and child.pk in teacher.childern_planned %}
-            <input class="" type="checkbox" name="child-{{ child.pk }}-present" {% if child.pk in teacher.childern_present %}checked="checked"{% endif %}></input>
-            {% elif child.pk in teacher.childern_planned  and child.pk in teacher.childern_present %}
+            {% if teacher_view.teacher.is_admin and child.pk in teacher_view.childern_planned %}
+            <input class="" type="checkbox" name="child-{{ child.pk }}-present" {% if child.pk in teacher_view.childern_present %}checked="checked"{% endif %}></input>
+            {% elif child.pk in teacher_view.childern_planned  and child.pk in teacher_view.childern_present %}
                 ANO
-            {% elif child.pk in teacher.childern_planned  and not child.pk in teacher.childern_present %}
+            {% elif child.pk in teacher_view.childern_planned  and not child.pk in teacher_view.childern_present %}
                 NE
             {% endif %}
         </td>

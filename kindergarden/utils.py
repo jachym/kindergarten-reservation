@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from .models import Child
 from .models import Parent
+from .models import Teacher
 
 class CapacityFilled(Exception):
     def __init__(self, child, day):
@@ -111,6 +112,8 @@ def plan_month(kindergarten, year, month):
         for child in par.child_set.all():
             childern.append(child)
 
+    teachers = Teacher.objects.filter(kindergarten=kindergarten)
+
     days = monthcalendar(year, month)
     for week in days:
         for dayidx in list(range(len(week))):
@@ -173,4 +176,32 @@ def plan_month(kindergarten, year, month):
                                 child.days.add(day)
                         elif not child.friday:
                             child.days.remove(day)
+
+                # A tady to samý pro učitele
+                for teacher in teachers:
+                    if dayidx == 0:
+                        if teacher.monday and not teacher.days_planned.filter(date=day.date):
+                            teacher.days_planned.add(day)
+                        elif not teacher.monday:
+                            teacher.days_planned.remove(day)
+                    if dayidx == 1:
+                        if teacher.tuesday and not teacher.days_planned.filter(date=day.date):
+                            teacher.days_planned.add(day)
+                        elif not teacher.tuesday:
+                            teacher.days_planned.remove(day)
+                    if dayidx == 2:
+                        if teacher.wednesday and not teacher.days_planned.filter(date=day.date):
+                            teacher.days_planned.add(day)
+                        elif not teacher.wednesday:
+                            teacher.days_planned.remove(day)
+                    if dayidx == 3:
+                        if teacher.thursday and not teacher.days_planned.filter(date=day.date):
+                            teacher.days_planned.add(day)
+                        elif not teacher.thursday:
+                            teacher.days_planned.remove(day)
+                    if dayidx == 4:
+                        if teacher.friday and not teacher.days_planned.filter(date=day.date):
+                            teacher.days_planned.add(day)
+                        elif not teacher.friday:
+                            teacher.days_planned.remove(day)
 

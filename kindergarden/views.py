@@ -15,7 +15,7 @@ from django.utils.safestring import mark_safe
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect
 
-from .models import Day, Teacher, Kindergarten, Parent, Child
+from .models import Day, Teacher, Kindergarten, Parent, Child, TeachersDay
 from .utils import Calendar
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.decorators import login_required
@@ -241,7 +241,7 @@ class DayView(LoginRequiredMixin, generic.DetailView):
 
         teachers = Teacher.objects.filter(user=self.request.user)
         if len(teachers):
-            context["teacher"] = self.get_teacher_context(teachers[0])
+            context["teacher_view"] = self.get_teacher_context(teachers[0])
 
         context["past"] = False
         now = datetime.datetime.now()
@@ -268,7 +268,9 @@ class DayView(LoginRequiredMixin, generic.DetailView):
         childern_present = Child.objects.filter(parent=parent, present__in=[day])
         childern_all = Child.objects.filter(parent=parent)
         childern_absent = Child.objects.filter(parent=parent, absent_all__in=[day])
+        teachers = Teacher.objects.filter(days_planned=day)
         context["parent"] = parent
+        context["teachers_for_the_day"] = teachers
         context["childern_planned"] = [ch.pk for ch in childern_planned]
         context["childern_present"] = [ch.pk for ch in childern_present]
         context["childern_absent"] = [ch.pk for ch in childern_absent]
@@ -282,7 +284,13 @@ class DayView(LoginRequiredMixin, generic.DetailView):
         childern_present = Child.objects.filter(parent__kindergarten=teacher.kindergarten, present__in=[day])
         childern_absent = Child.objects.filter(parent__kindergarten=teacher.kindergarten, absent_all__in=[day])
         childern_all = Child.objects.filter(parent__kindergarten=teacher.kindergarten)
+        teachers = Teacher.objects.filter(days_planned=day)
+        for t in teachers:
+            days = TeachersDay.objects.filter(date=day.date, teacher=teacher)
+            if len(days) > 0:
+                t.today = days[0]
         context["teacher"] = teacher
+        context["teachers_for_the_day"] = teachers
         context["childern_planned"] = [ch.pk for ch in childern_planned]
         context["childern_present"] = [ch.pk for ch in childern_present]
         context["childern_absent"] = [ch.pk for ch in childern_absent]
@@ -473,6 +481,9 @@ def save_day(request, year, month, day):
         kindergarten = teachers[0].kindergarten
     elif parents.count():
         kindergarten = parents[0].kindergarten
+
+    teachers_for_the_day = Teacher.objects.filter(kindergarten=kindergarten, days_planned=day)
+
     for child in kindergarten.childern:
 
         if teachers.count() and teachers[0].is_admin or \
@@ -504,9 +515,27 @@ def save_day(request, year, month, day):
                     child.days.remove(day)
                     child.absent_all.add(day)
 
+    for teacher in teachers_for_the_day:
+        teachers_day = TeachersDay.objects.filter(date=day.date, teacher=teacher)
+        t_key = "teacher-{}-present".format(teacher.pk)
+        if form[t_key]:
+            units  = list((int(v) for v in form[t_key].split(":")))
+            if len(units) > 2:
+                hours, minutes, seconds = units
+            elif len(units) == 2:
+                hours, minutes = units
+            if len(teachers_day) == 0:
+                teachers_day = TeachersDay.objects.create(date=day.date,
+                        teacher=teacher, duration=datetime.timedelta(hours=hours,
+                        minutes=minutes))
+            else:
+                teachers_day = teachers_day[0]
+                teachers_day.duration =  datetime.timedelta(hours=hours,
+                        minutes=minutes)
+                teachers_day.save()
+
     url = reverse("day", args=[day.date.year, day.date.month, day.date.day])
     return HttpResponseRedirect(url)
-
 
 def get_date(req_day):
     if req_day:
