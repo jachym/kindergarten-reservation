@@ -295,6 +295,7 @@ class DayView(LoginRequiredMixin, generic.DetailView):
         context["childern_present"] = [ch.pk for ch in childern_present]
         context["childern_absent"] = [ch.pk for ch in childern_absent]
         context["childern_all"] = childern_all
+        context["meals"] = day.meals
         return context
 
 
@@ -515,24 +516,29 @@ def save_day(request, year, month, day):
                     child.days.remove(day)
                     child.absent_all.add(day)
 
-    for teacher in teachers_for_the_day:
-        teachers_day = TeachersDay.objects.filter(date=day.date, teacher=teacher)
-        t_key = "teacher-{}-present".format(teacher.pk)
-        if form[t_key]:
-            units  = list((int(v) for v in form[t_key].split(":")))
-            if len(units) > 2:
-                hours, minutes, seconds = units
-            elif len(units) == 2:
-                hours, minutes = units
-            if len(teachers_day) == 0:
-                teachers_day = TeachersDay.objects.create(date=day.date,
-                        teacher=teacher, duration=datetime.timedelta(hours=hours,
-                        minutes=minutes))
-            else:
-                teachers_day = teachers_day[0]
-                teachers_day.duration =  datetime.timedelta(hours=hours,
-                        minutes=minutes)
-                teachers_day.save()
+    if not len(parents):
+        for teacher in teachers_for_the_day:
+            teachers_day = TeachersDay.objects.filter(date=day.date, teacher=teacher)
+            t_key = "teacher-{}-present".format(teacher.pk)
+            if form[t_key]:
+                units  = list((int(v) for v in form[t_key].split(":")))
+                if len(units) > 2:
+                    hours, minutes, seconds = units
+                elif len(units) == 2:
+                    hours, minutes = units
+                if len(teachers_day) == 0:
+                    teachers_day = TeachersDay.objects.create(date=day.date,
+                            teacher=teacher, duration=datetime.timedelta(hours=hours,
+                            minutes=minutes))
+                else:
+                    teachers_day = teachers_day[0]
+                    teachers_day.duration =  datetime.timedelta(hours=hours,
+                            minutes=minutes)
+                    teachers_day.save()
+
+        if "meals" in form:
+            day.meals = int(form["meals"])
+            day.save()
 
     url = reverse("day", args=[day.date.year, day.date.month, day.date.day])
     return HttpResponseRedirect(url)

@@ -2,8 +2,10 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from django.urls import resolve
 
-from .models import Kindergarten, Teacher, Parent, Day, Child
+from .models import Kindergarten, Teacher, Parent, Day, Child, TeachersDay
 from .forms import ChildAdminForm
+import datetime
+from calendar import monthrange
 
 class ChildKindergartenListFilter(admin.SimpleListFilter):
     title = _('Kindergarten')
@@ -43,7 +45,7 @@ class KindergartenAdmin(admin.ModelAdmin):
 
 class TeacherAdmin(admin.ModelAdmin):
     list_display = (
-        "name", "kindergarten", "email", "phone")
+        "name", "kindergarten", "email", "phone", "this_month", "last_month")
 
     list_filer = ("kindergarten")
     exclude = ("days_planned", "days_present")
@@ -61,6 +63,37 @@ class TeacherAdmin(admin.ModelAdmin):
 
     def email(self, teacher):
         return teacher.user.email
+
+    def this_month(self, teacher):
+
+        today = datetime.date.today()
+        year = today.year
+        month = today.month
+        min_date = datetime.date(year, month, 1)
+        max_date = datetime.date(year, month, monthrange(year, month)[1])
+
+        days = TeachersDay.objects.filter(date__gte=min_date, date__lte=max_date,
+                teacher=teacher)
+
+        return sum([d.duration.total_seconds()/3600 for d in days])
+
+    def last_month(self, teacher):
+
+        today = datetime.date.today()
+        year = today.year
+        month = today.month
+
+        month = month - 1
+        if month < 1:
+            month = 12
+            year = year -1
+        min_date = datetime.date(year, month, 1)
+        max_date = datetime.date(year, month, monthrange(year, month)[1])
+
+        days = TeachersDay.objects.filter(date__gte=min_date, date__lte=max_date,
+                teacher=teacher)
+
+        return sum([d.duration.total_seconds()/3600 for d in days])
 
 
 class ParentAdmin(admin.ModelAdmin):
@@ -101,7 +134,7 @@ class DayAdmin(admin.ModelAdmin):
     ]
     exclude = ("days", "teachers")
     list_display = ("date", "capacity", "kindergarten", "childern_planned",
-                    "childern_present")
+                    "childern_present", "meals")
     list_filter = ("kindergarten",)
 
     def childern_planned(self, day):

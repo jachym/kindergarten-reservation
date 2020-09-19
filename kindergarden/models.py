@@ -293,6 +293,7 @@ class Day(models.Model):
     capacity = models.IntegerField(blank=True, null=True)
     note = models.TextField(blank=True)
     program = models.TextField(blank=True)
+    meals = models.IntegerField(default=0)
     kindergarten = models.ForeignKey(
         "Kindergarten", on_delete=models.CASCADE)
 
