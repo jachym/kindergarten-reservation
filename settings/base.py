@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'kindergarden',
     'rest_framework',
+    'dbbackup',
+    'cron'
 ]
 
 MIDDLEWARE = [
@@ -127,3 +129,6 @@ LOGOUT_URL= "/logout/"
 
 STATIC_URL = '/static/'
 STATIC_ROOT="./static/"
+
+#DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+#DBBACKUP_STORAGE_OPTIONS = {'location': '/my/backup/dir/'}
