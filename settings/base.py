@@ -131,3 +131,6 @@ STATIC_ROOT="./static/"
 
 #DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 #DBBACKUP_STORAGE_OPTIONS = {'location': '/my/backup/dir/'}
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+#EMAIL_FILE_PATH = str(BASE_DIR.joinpath('sent_emails'))

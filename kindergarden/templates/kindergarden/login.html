@@ -15,6 +15,7 @@
     <input name="password" type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
   </div>
   <button type="submit" class="btn btn-primary">Přihlásit</button>
+  <p>Pokud si heslo nepamatujete, můžete  <a href="{% url 'password_reset' %}">nastavit nové heslo</a>.</p>
     {% csrf_token %}
 </form>
 </div>
