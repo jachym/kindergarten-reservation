@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'kindergarden',
     'rest_framework',
     'dbbackup',
-    'cron'
 ]
 
 MIDDLEWARE = [
