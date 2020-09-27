@@ -124,7 +124,7 @@ class Teacher(models.Model):
         super().save(*args, **kwargs)
 
         # plan this month and next month automatically
-        today = datetime.today()
+        today = datetime.date.today()
         plan_month(self.kindergarten, today.year, today.month)
 
         if today.month == 12:
@@ -257,7 +257,7 @@ class Child(models.Model):
     @property
     def absent(self):
 
-        today = datetime.today()
+        today = datetime.date.today()
         year = today.year
         if today.month < 9:
             year = year - 1
@@ -279,7 +279,7 @@ class Child(models.Model):
     def compensation(self, today=None):
         months = self.kindergarten.compensation_length
         if today is None:
-            today = datetime.today()
+            today = datetime.date.today()
 
         month = today.month - months
         year = today.year
