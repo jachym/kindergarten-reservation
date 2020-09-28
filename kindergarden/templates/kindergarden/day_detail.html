@@ -14,10 +14,10 @@
 </div>
 
 {% if parent %}
-<h3>Učitelé pro tento den</h3>
+<h3>Průvodci pro tento den</h3>
 <table class="table table-bordered table-sm">
     <thead>
-    <tr><th>Učitel</th><th>Telefon</th></tr>
+    <tr><th>Průvodce</th><th>Telefon</th></tr>
     </thead>
 {% for teacher in parent.teachers_for_the_day %}
 <tr>
@@ -72,11 +72,11 @@
     <label for="meal">Počet obědů</label>
     <input name="meals" id="meals" value="{{ teacher_view.meals }}"></input>
 
-<h3>Učitelé na tento den</h3>
+<h3>Průvodci na tento den</h3>
 <input class="btn btn-primary" type="submit" value="Uložit"></input>
 <table class="table table-bordered table-sm">
     <thead>
-    <tr><th>Učitel</th><th>Hodiny</th></tr>
+    <tr><th>Průvodce</th><th>Hodiny</th></tr>
     </thead>
     <tbody>
     {% for teacher in teacher_view.teachers_for_the_day %}
