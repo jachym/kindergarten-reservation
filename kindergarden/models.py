@@ -302,7 +302,7 @@ class Child(models.Model):
         super().save(*args, **kwargs)
 
         # plan this month and next month automatically
-        today = datetime.today()
+        today = datetime.date.today()
         plan_month(self.kindergarten, today.year, today.month)
 
         if today.month == 12:
