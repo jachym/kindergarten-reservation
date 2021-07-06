@@ -136,6 +136,12 @@ def plan_month(kindergarten, year, month):
 
                 # BOŽE !!! omlouvám se svému budoucímu já za tuhle hrůzu
                 for child in childern:
+
+                    # capacity 0 -> remove all
+                    if day.capacity == 0:
+                        child.days.remove(day)
+                        continue
+
                     if dayidx == 0:
                         if child.monday and not child.days.filter(date=day.date):
                             if day.child_day_planned.count() >= day.capacity:
@@ -179,6 +185,12 @@ def plan_month(kindergarten, year, month):
 
                 # A tady to samý pro učitele
                 for teacher in teachers:
+
+                    # capacity 0 -> remove all
+                    if day.capacity == 0:
+                        teacher.days_planned.remove(day)
+                        continue
+
                     if dayidx == 0:
                         if teacher.monday and not teacher.days_planned.filter(date=day.date):
                             teacher.days_planned.add(day)
