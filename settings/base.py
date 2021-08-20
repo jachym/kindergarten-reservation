@@ -26,6 +26,7 @@ SECRET_KEY = 'onm5lq(c4+b#ngrm27d7z9zo7zxeo^z^u-0&ock!ega#38(fqe'
 DEBUG = True
 
 ALLOWED_HOSTS = []
+SITE_ID=1
 
 
 # Application definition
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'kindergarden',
     'rest_framework',
     'dbbackup',
