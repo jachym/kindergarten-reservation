@@ -3,3 +3,6 @@ django-rest
 djangorestframework
 django-dbbackup
 django-cron
+django-photologue
+Pillow
+django-sortedm2m

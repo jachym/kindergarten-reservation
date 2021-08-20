@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'kindergarden',
     'rest_framework',
     'dbbackup',
+    'sortedm2m',
+    'photologue',
 ]
 
 MIDDLEWARE = [

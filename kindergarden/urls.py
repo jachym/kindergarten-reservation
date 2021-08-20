@@ -3,6 +3,9 @@ from . import views
 from django.urls import path, include
 from rest_framework import routers
 
+from photologue.sitemaps import GallerySitemap, PhotoSitemap
+
+
 urlpatterns = [
     url(r'^$', views.KindergartensView.as_view(), name='index'),
     path('parent/', views.ParentView.as_view(), name="parent"),
@@ -17,4 +20,5 @@ urlpatterns = [
     path('<int:year>/<int:month>/<int:day>/save/', views.save_day, name="day-save"),
     path('child/<uuid:uuid>/', views.ChildView.as_view(), name="child"),
     path('dayofweek/<int:year>/<int:month>/<str:day>/', views.DayOfWeekView.as_view(), name="day-of-week"),
+    url(r'^photologue/', include('photologue.urls', namespace='photologue')),
 ]
