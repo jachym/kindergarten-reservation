@@ -28,4 +28,5 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='kindergarden/password_reset_confirm.html'), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='kindergarden/password_reset_complete.html'), name='password_reset_complete'),
     path('', include('kindergarden.urls')),
+    url(r'^photologue/', include('photologue.urls', namespace='photologue')),
 ]
