@@ -478,6 +478,8 @@ def save_day(request, year, month, day):
     teachers = Teacher.objects.filter(user=request.user)
     parents = Parent.objects.filter(user=request.user)
 
+    role = form["role"]
+
     if teachers.count():
         kindergarten = teachers[0].kindergarten
     elif parents.count():
@@ -493,7 +495,7 @@ def save_day(request, year, month, day):
             if "child-{}-present".format(child.pk) in form:
                 if not day in child.present.all():
                     child.present.add(day)
-            else:
+            elif role == "teacher":
                 if day in child.present.all():
                     child.present.remove(day)
                     child.absent_all.add(day)
@@ -511,12 +513,12 @@ def save_day(request, year, month, day):
                     c_year, c_month, c_day = map(lambda x: int(x), form[c_key].split("-"))
                     compensate_date = datetime.date(c_year, c_month, c_day)
                     child.absent_all.remove(Day.objects.get(date=compensate_date, kindergarten=kindergarten))
-            else:
+            elif role == "teacher":
                 if day in child.days.all():
                     child.days.remove(day)
                     child.absent_all.add(day)
 
-    if not len(parents):
+    if role == "teacher":
         for teacher in teachers_for_the_day:
             teachers_day = TeachersDay.objects.filter(date=day.date, teacher=teacher)
             t_key = "teacher-{}-present".format(teacher.pk)

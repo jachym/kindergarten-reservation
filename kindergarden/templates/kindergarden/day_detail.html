@@ -30,6 +30,7 @@
 <h3>Moje děti</h3>
 <form method="post" action="{% url 'day-save' day.date.year day.date.month day.date.day  %} ">
 {% csrf_token %}
+<input type="hidden" name="role" value="parent"></input>
 <div class="table-responsive">
 <input class="btn btn-primary" type="submit" value="Uložit"></input>
 <table class="table table-bordered table-sm">
@@ -71,6 +72,7 @@
 {% csrf_token %}
     <label for="meal">Počet obědů</label>
     <input name="meals" id="meals" value="{{ teacher_view.meals }}"></input>
+    <input type="hidden" name="role" value="teacher"></input>
 
 <h3>Průvodci na tento den</h3>
 <input class="btn btn-primary" type="submit" value="Uložit"></input>
