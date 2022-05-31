@@ -42,7 +42,7 @@
     <tr>
         <td><a href="{% url 'child' child.uuid %}">{{ child.first_name }} {{ child.middle_name }} {{ child.last_name }}</a></td>
         <td class="text-center">
-            {% if not past and day.capacity > day.child_day_planned.count %}
+            {% if not past and day.capacity >= day.child_day_planned.count %}
             <input class="" type="checkbox"  name="child-{{ child.pk }}-planned" {% if child.pk in parent.childern_planned %} checked="checked"{% endif %} />
                 {% if not child.pk in parent.childern_planned %} 
                         <select class="form-control" name="child-{{ child.pk }}-compensation">
