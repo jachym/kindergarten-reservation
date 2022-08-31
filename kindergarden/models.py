@@ -324,7 +324,7 @@ class Child(models.Model):
 
 class Day(models.Model):
 
-    date = models.DateField()
+    date = models.DateField(db_index=True)
     capacity = models.IntegerField(blank=True, null=True)
     note = models.TextField(blank=True)
     program = models.TextField(blank=True)

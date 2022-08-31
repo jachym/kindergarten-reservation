@@ -4,6 +4,8 @@ from django.urls import resolve
 
 from .models import Kindergarten, Teacher, Parent, Day, Child, TeachersDay
 from .forms import ChildAdminForm
+from datetime import datetime, timedelta
+HISTORY_DAYS = 60
 
 class ChildKindergartenListFilter(admin.SimpleListFilter):
     title = _('Kindergarten')
@@ -27,15 +29,27 @@ class ChildDaysInline(admin.TabularInline):
     extra = 0
     verbose_name = _("Reserved day")
 
+    def get_queryset(self, request):
+        qs = super(ChildDaysInline, self).get_queryset(request)
+        return qs.filter(day__date__gte=datetime.now()-timedelta(days=HISTORY_DAYS))
+
 class ChildPresentInline(admin.TabularInline):
     model = Child.present.through
     extra = 0
     verbose_name = _("Present day")
 
+    def get_queryset(self, request):
+        qs = super(ChildPresentInline, self).get_queryset(request)
+        return qs.filter(day__date__gte=datetime.now()-timedelta(days=HISTORY_DAYS))
+
 class ChildAbsentInline(admin.TabularInline):
     model = Child.absent_all.through
     extra = 0
     verbose_name = _("Absent day")
+
+    def get_queryset(self, request):
+        qs = super(ChildAbsentInline, self).get_queryset(request)
+        return qs.filter(day__date__gte=datetime.now()-timedelta(days=HISTORY_DAYS))
 
 class KindergartenAdmin(admin.ModelAdmin):
     list_display = (
@@ -82,7 +96,9 @@ class ChildAdmin(admin.ModelAdmin):
     list_display = ("name", "kindergarten", "parent")
 
     inlines = [
-            ChildDaysInline, ChildPresentInline, ChildAbsentInline
+            ChildDaysInline,
+            ChildPresentInline,
+            ChildAbsentInline
     ]
     exclude = ("days", "present")
 
